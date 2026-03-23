@@ -40,16 +40,12 @@ export default function Login() {
       {/* Header */}
       <header className="py-6 px-6 border-b border-white/10 bg-navy/80 backdrop-blur-md sticky top-0 z-50 transition-colors duration-300">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-2">
-            <svg width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-90">
-              <path d="M8 22 L 40 20 Q 42 24 24 24 L 8 24 Z" fill="none" stroke="#D4AF37" strokeWidth="2.5" strokeLinejoin="round"/>
-              <line x1="18" y1="24" x2="18" y2="34" stroke="#D4AF37" strokeWidth="2.5"/>
-              <path d="M12 34 L 28 34 Q 26 36 18 36 L 12 36 Z" fill="none" stroke="#D4AF37" strokeWidth="2.5" strokeLinejoin="round"/>
-            </svg>
-            <div className="flex flex-col items-start leading-[0.9]">
-              <span className="text-[12px] font-bold tracking-widest text-white">FLY</span>
-              <span className="text-[12px] font-bold tracking-widest text-white">FOIL</span>
-            </div>
+          <Link to="/" className="flex items-center">
+            <img 
+              src={isDarkMode ? "/assets/logo-light.png" : "/assets/logo-dark.png"} 
+              alt="FlyFoil Formosa" 
+              className="h-12 w-auto object-contain" 
+            />
           </Link>
           <div className="flex items-center gap-6">
             <div className="text-sm font-medium text-silver/80 hidden sm:block">Flight Deck Access</div>
@@ -135,7 +131,7 @@ export default function Login() {
 
                 <button 
                   type="submit" 
-                  className="w-full py-4 bg-electric text-navy font-bold rounded-xl text-sm hover:bg-electric/90 transition-all duration-300 flex items-center justify-center gap-2"
+                  className="btn-premium w-full text-sm"
                 >
                   SEND MAGIC LINK <ArrowRight size={18} />
                 </button>

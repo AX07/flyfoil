@@ -1,0 +1,30 @@
+{
+  "entities": {
+    "Reservation": {
+      "title": "Reservation",
+      "description": "A booking reservation for a flight.",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string", "description": "Full name of the passenger" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "date": { "type": "string" },
+        "sessionTime": { "type": "string" },
+        "location": { "type": "string" },
+        "experience": { "type": "string" },
+        "wetsuitSize": { "type": "string" },
+        "healthStatus": { "type": "string", "enum": ["pending", "fit"] },
+        "waiverStatus": { "type": "string", "enum": ["pending", "signed"] },
+        "flightSchool": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["fullName", "email", "phone", "date", "sessionTime", "location", "experience", "wetsuitSize", "healthStatus", "waiverStatus", "flightSchool", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/reservations/{reservationId}": {
+      "schema": { "$ref": "#/entities/Reservation" },
+      "description": "Stores all reservations."
+    }
+  }
+}

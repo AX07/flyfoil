@@ -6,16 +6,102 @@ import {
   CheckCircle, Video, DownloadCloud, ChevronRight, Check,
   Sun, Moon, Waves, X, Compass
 } from 'lucide-react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
+import { GoogleGenAI, Type } from '@google/genai';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { db } from './firebase';
 
 export default function Dashboard() {
   const { id } = useParams();
-  const [timeLeft, setTimeLeft] = useState("02:14:00");
+  const [bookingData, setBookingData] = useState<any>(null);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
+    if (!id) return;
+    const unsubscribe = onSnapshot(doc(db, 'reservations', id), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setBookingData(data);
+        setWetsuitSize(data.wetsuitSize || 'None');
+        setHealthStatus(data.healthStatus || 'pending');
+        setWaiverStatus(data.waiverStatus || 'pending');
+        setExperienceLevel(data.experience || null);
+        setSafetyChecks({
+          signals: data.flightSchool || false,
+          falling: data.flightSchool || false,
+          equipment: data.flightSchool || false
+        });
+      }
+    });
+    return () => unsubscribe();
+  }, [id]);
+
+  const updateReservation = async (field: string, value: any) => {
+    if (!id) return;
+    try {
+      await updateDoc(doc(db, 'reservations', id), {
+        [field]: value
+      });
+    } catch (error) {
+      console.error("Error updating reservation:", error);
+    }
+  };
+
+  const [timeLeft, setTimeLeft] = useState("00:00:00");
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
     return saved !== null ? saved === 'dark' : true;
   });
-  const [wetsuitSize, setWetsuitSize] = useState("M");
+  const [wetsuitSize, setWetsuitSize] = useState("None");
+  
+  const [isLoadingWeather, setIsLoadingWeather] = useState(true);
+  const [weatherData, setWeatherData] = useState({
+    windSpeed: '--',
+    waterTemp: '--',
+    tideStatus: '--',
+    tideTime: '--'
+  });
+
+  useEffect(() => {
+    async function fetchConditions() {
+      setIsLoadingWeather(true);
+      try {
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const response = await ai.models.generateContent({
+          model: "gemini-3-flash-preview",
+          contents: "Find the current weather and tide conditions for Cabanas de Tavira, Ria Formosa, Portugal. Return a JSON object with windSpeed (number in knots), waterTemp (number in Celsius), tideStatus (e.g., 'Rising', 'Falling'), and tideTime (e.g., 'High at 14:30').",
+          config: {
+            tools: [{ googleSearch: {} }],
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                windSpeed: { type: Type.STRING },
+                waterTemp: { type: Type.STRING },
+                tideStatus: { type: Type.STRING },
+                tideTime: { type: Type.STRING }
+              },
+              required: ["windSpeed", "waterTemp", "tideStatus", "tideTime"]
+            }
+          }
+        });
+        
+        if (response.text) {
+          const data = JSON.parse(response.text);
+          setWeatherData(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch weather data:", error);
+      } finally {
+        setIsLoadingWeather(false);
+      }
+    }
+    
+    fetchConditions();
+  }, []);
   
   const [healthStatus, setHealthStatus] = useState<'pending' | 'fit'>('pending');
   const [showHealthPopup, setShowHealthPopup] = useState(false);
@@ -44,40 +130,76 @@ export default function Dashboard() {
 
   // Mock countdown effect
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        const [hours, minutes, seconds] = prev.split(':').map(Number);
-        let totalSeconds = hours * 3600 + minutes * 60 + seconds;
-        if (totalSeconds > 0) totalSeconds--;
-        
-        const h = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
-        const m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
-        const s = (totalSeconds % 60).toString().padStart(2, '0');
-        return `${h}:${m}:${s}`;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+    if (!bookingData || !bookingData.date || !bookingData.sessionTime) {
+      // Fallback if no booking data
+      setTimeLeft("02:14:00");
+      return;
+    }
 
-  const toggleCheck = (key: keyof typeof safetyChecks) => {
-    setSafetyChecks(prev => ({ ...prev, [key]: !prev[key] }));
+    const calculateTimeLeft = () => {
+      // sessionTime is either "morning" or "evening"
+      const sessionHour = bookingData.sessionTime === 'morning' ? 10 : 15;
+      
+      // bookingData.date is like "2026-03-24"
+      const sessionDate = new Date(`${bookingData.date}T${sessionHour.toString().padStart(2, '0')}:00:00`);
+      
+      const now = new Date();
+      const difference = sessionDate.getTime() - now.getTime();
+      
+      if (difference <= 0) {
+        return "00:00:00";
+      }
+      
+      const totalSeconds = Math.floor(difference / 1000);
+      const h = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
+      const m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
+      const s = (totalSeconds % 60).toString().padStart(2, '0');
+      
+      return `${h}:${m}:${s}`;
+    };
+
+    setTimeLeft(calculateTimeLeft());
+
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [bookingData]);
+
+  const toggleCheck = async (key: keyof typeof safetyChecks) => {
+    const newChecks = { ...safetyChecks, [key]: !safetyChecks[key] };
+    setSafetyChecks(newChecks);
+    if (newChecks.signals && newChecks.falling && newChecks.equipment) {
+      await updateReservation('flightSchool', true);
+    } else {
+      await updateReservation('flightSchool', false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-navy text-white selection:bg-electric selection:text-navy pb-24 transition-colors duration-300">
+    <div className="min-h-screen bg-navy text-white selection:bg-electric selection:text-navy pb-24 transition-colors duration-300 relative">
+      {/* Background Image */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className={`absolute inset-0 ${isDarkMode ? 'bg-black/80' : 'bg-black/20'} z-10`}></div>
+        <div className={`absolute inset-0 bg-gradient-to-b from-navy ${isDarkMode ? 'via-navy/60' : 'via-navy/10'} to-navy z-10`}></div>
+        <img 
+          src="/assets/pool-water-bg.jpg" 
+          alt="Pool water background"
+          className="w-full h-full object-cover"
+          referrerPolicy="no-referrer"
+        />
+      </div>
+
       {/* Header */}
-      <header className="py-6 px-6 border-b border-white/10 bg-navy/80 backdrop-blur-md sticky top-0 z-50 transition-colors duration-300">
+      <header className="py-6 px-6 border-b border-white/10 bg-navy/80 backdrop-blur-md sticky top-0 z-50 transition-colors duration-300 relative">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-2">
-            <svg width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-90">
-              <path d="M8 22 L 40 20 Q 42 24 24 24 L 8 24 Z" fill="none" stroke="#D4AF37" strokeWidth="2.5" strokeLinejoin="round"/>
-              <line x1="18" y1="24" x2="18" y2="34" stroke="#D4AF37" strokeWidth="2.5"/>
-              <path d="M12 34 L 28 34 Q 26 36 18 36 L 12 36 Z" fill="none" stroke="#D4AF37" strokeWidth="2.5" strokeLinejoin="round"/>
-            </svg>
-            <div className="flex flex-col items-start leading-[0.9]">
-              <span className="text-[12px] font-bold tracking-widest text-white">FLY</span>
-              <span className="text-[12px] font-bold tracking-widest text-white">FOIL</span>
-            </div>
+          <Link to="/" className="flex items-center">
+            <img 
+              src={isDarkMode ? "/assets/logo-light.png" : "/assets/logo-dark.png"} 
+              alt="FlyFoil Formosa" 
+              className="h-12 w-auto object-contain" 
+            />
           </Link>
           <div className="flex items-center gap-6">
             <div className="text-sm font-medium text-silver/80 hidden sm:block">Flight Deck</div>
@@ -88,7 +210,7 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 pt-12 space-y-16">
+      <main className="max-w-4xl mx-auto px-6 pt-12 space-y-16 relative z-10">
         
         {/* 1. Live Mission Status (Hero) */}
         <section>
@@ -98,7 +220,7 @@ export default function Dashboard() {
             className="text-center mb-10"
           >
             <h1 className="text-3xl md:text-5xl font-display font-black mb-4 tracking-tighter uppercase leading-none">
-              Thanks for reserving, <span className="text-transparent bg-clip-text bg-gradient-to-r from-electric to-blue-400">Alex</span>
+              Thanks for reserving, <span className="text-transparent bg-clip-text bg-gradient-to-r from-electric to-blue-400">{bookingData?.fullName?.split(' ')[0] || 'Alex'}</span>
             </h1>
             
             <div className="mt-8 bg-white/5 border border-white/10 rounded-2xl p-8 max-w-md mx-auto backdrop-blur-md">
@@ -122,7 +244,11 @@ export default function Dashboard() {
                 <span className="font-medium uppercase tracking-wider text-sm">Wind Speed</span>
               </div>
               <div>
-                <div className="text-3xl font-bold text-white">12 <span className="text-lg text-silver/60 font-normal">knots</span></div>
+                {isLoadingWeather ? (
+                  <div className="h-9 w-24 bg-white/10 animate-pulse rounded mb-1"></div>
+                ) : (
+                  <div className="text-3xl font-bold text-white">{weatherData.windSpeed} <span className="text-lg text-silver/60 font-normal">knots</span></div>
+                )}
                 <div className="text-sm text-emerald-400 mt-1">Optimal for eFoiling</div>
               </div>
             </motion.div>
@@ -139,7 +265,11 @@ export default function Dashboard() {
                 <span className="font-medium uppercase tracking-wider text-sm">Water Temp</span>
               </div>
               <div>
-                <div className="text-3xl font-bold text-white">19°<span className="text-lg text-silver/60 font-normal">C</span></div>
+                {isLoadingWeather ? (
+                  <div className="h-9 w-24 bg-white/10 animate-pulse rounded mb-1"></div>
+                ) : (
+                  <div className="text-3xl font-bold text-white">{weatherData.waterTemp}°<span className="text-lg text-silver/60 font-normal">C</span></div>
+                )}
                 <div className="text-sm text-silver/80 mt-1">Comfortable</div>
               </div>
             </motion.div>
@@ -156,8 +286,16 @@ export default function Dashboard() {
                 <span className="font-medium uppercase tracking-wider text-sm">Tide Status</span>
               </div>
               <div>
-                <div className="text-3xl font-bold text-white">Rising</div>
-                <div className="text-sm text-silver/80 mt-1">High at 14:30</div>
+                {isLoadingWeather ? (
+                  <div className="h-9 w-24 bg-white/10 animate-pulse rounded mb-1"></div>
+                ) : (
+                  <div className="text-3xl font-bold text-white">{weatherData.tideStatus}</div>
+                )}
+                {isLoadingWeather ? (
+                  <div className="h-5 w-32 bg-white/10 animate-pulse rounded mt-1"></div>
+                ) : (
+                  <div className="text-sm text-silver/80 mt-1">{weatherData.tideTime}</div>
+                )}
               </div>
             </motion.div>
 
@@ -183,6 +321,43 @@ export default function Dashboard() {
           </div>
         </section>
 
+        {/* 1.5 Booking Details */}
+        {bookingData && (
+          <section>
+            <h2 className="text-2xl font-display font-black mb-6 uppercase tracking-wider flex items-center gap-3">
+              <span className="w-8 h-px bg-electric"></span> Booking Details
+            </h2>
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">Full Name</p>
+                  <p className="text-lg font-medium text-white">{bookingData.fullName || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">Email</p>
+                  <p className="text-lg font-medium text-white">{bookingData.email || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">Phone</p>
+                  <p className="text-lg font-medium text-white">{bookingData.phone || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">Date & Time</p>
+                  <p className="text-lg font-medium text-white">{bookingData.date || 'N/A'} <span className="capitalize">{bookingData.sessionTime ? `(${bookingData.sessionTime})` : ''}</span></p>
+                </div>
+                <div>
+                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">Location</p>
+                  <p className="text-lg font-medium text-white">{bookingData.location || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">Experience</p>
+                  <p className="text-lg font-medium text-white">{bookingData.experience || 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* 2. Gear & Profile Management */}
         <section>
           <h2 className="text-2xl font-display font-black mb-6 uppercase tracking-wider flex items-center gap-3">
@@ -193,14 +368,15 @@ export default function Dashboard() {
               <div>
                 <Shirt className="text-silver mb-4" size={28} />
                 <h3 className="font-display font-bold text-white mb-1 uppercase tracking-wider">Wetsuit Match</h3>
-                <p className="text-sm text-silver/80 mb-3">Select your size</p>
+                <p className="text-sm text-silver/80 mb-3">Select your size (Please request 24h in advance)</p>
               </div>
               <div className="relative">
                 <select 
                   value={wetsuitSize}
-                  onChange={(e) => setWetsuitSize(e.target.value)}
+                  onChange={(e) => updateReservation('wetsuitSize', e.target.value)}
                   className="w-full bg-navy border border-white/20 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-electric appearance-none cursor-pointer"
                 >
+                  <option value="None">No Wetsuit</option>
                   <option value="XS">Size XS</option>
                   <option value="S">Size S</option>
                   <option value="M">Size M</option>
@@ -277,8 +453,8 @@ export default function Dashboard() {
             <div className="rounded-2xl overflow-hidden border border-white/10 bg-navy-light relative aspect-video">
               <iframe 
                 className="absolute inset-0 w-full h-full"
-                src="https://www.youtube.com/embed/5rR4XPne7MU?controls=1&rel=0&modestbranding=1" 
-                title="Kneeling to Standing Transition"
+                src="https://www.youtube.com/embed/FenSw41WbvQ?si=xewKNHlSgTNQ82us&controls=1&rel=0&modestbranding=1" 
+                title="Safety Briefing Checklist"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                 allowFullScreen
               ></iframe>
@@ -386,7 +562,7 @@ export default function Dashboard() {
                 </button>
                 <button 
                   onClick={() => {
-                    setHealthStatus('fit');
+                    updateReservation('healthStatus', 'fit');
                     setShowHealthPopup(false);
                   }}
                   className="flex-1 py-3 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 font-bold rounded-xl text-sm hover:bg-emerald-500/30 transition-colors"
@@ -430,7 +606,7 @@ export default function Dashboard() {
                 </button>
                 <button 
                   onClick={() => {
-                    setWaiverStatus('signed');
+                    updateReservation('waiverStatus', 'signed');
                     setShowWaiverPopup(false);
                   }}
                   className="flex-1 py-3 bg-electric text-navy font-bold rounded-xl text-sm hover:bg-electric/90 transition-colors"
@@ -489,7 +665,12 @@ export default function Dashboard() {
                   Cancel
                 </button>
                 <button 
-                  onClick={() => setShowExperiencePopup(false)}
+                  onClick={() => {
+                    if (experienceLevel) {
+                      updateReservation('experience', experienceLevel);
+                    }
+                    setShowExperiencePopup(false);
+                  }}
                   disabled={!experienceLevel}
                   className={`flex-1 py-3 font-bold rounded-xl text-sm transition-colors ${
                     experienceLevel

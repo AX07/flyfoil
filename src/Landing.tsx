@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { 
@@ -10,6 +10,8 @@ import {
   MessageCircle, ChevronRight, ChevronLeft, Star, Play, Waves, Compass,
   Gift, UserCheck, LifeBuoy, Sun, Moon, User, Mail, Phone, Clock, Info
 } from 'lucide-react';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from './firebase';
 
 const createCustomIcon = (isActive: boolean) => L.divIcon({
   className: 'custom-leaflet-icon',
@@ -104,26 +106,11 @@ export default function Landing() {
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-transparent ${isScrolled ? 'py-4' : 'py-6'}`}>
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
           <div className="flex flex-col items-center justify-center cursor-pointer group" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <div className="relative flex flex-col items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-full border-[1.5px] border-[#D4AF37]/60 group-hover:border-[#D4AF37] transition-colors bg-navy/30 backdrop-blur-sm">
-              {/* Distressed outer ring effect */}
-              <div className="absolute inset-[-2px] rounded-full border border-[#D4AF37]/30" style={{ clipPath: 'polygon(0% 0%, 100% 0%, 100% 90%, 0% 100%)' }}></div>
-              <div className="absolute inset-[2px] rounded-full border border-[#D4AF37]/20" style={{ clipPath: 'polygon(10% 0%, 100% 10%, 90% 100%, 0% 90%)' }}></div>
-              
-              <div className="flex flex-col items-center justify-center w-full h-full pt-1">
-                <div className="flex items-center gap-1.5 md:gap-2">
-                  <svg width="20" height="20" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-90 group-hover:opacity-100 transition-opacity md:w-6 md:h-6">
-                    <path d="M8 22 L 40 20 Q 42 24 24 24 L 8 24 Z" fill="none" stroke="#D4AF37" strokeWidth="2.5" strokeLinejoin="round"/>
-                    <line x1="18" y1="24" x2="18" y2="34" stroke="#D4AF37" strokeWidth="2.5"/>
-                    <path d="M12 34 L 28 34 Q 26 36 18 36 L 12 36 Z" fill="none" stroke="#D4AF37" strokeWidth="2.5" strokeLinejoin="round"/>
-                  </svg>
-                  <div className="flex flex-col items-start leading-[0.9]">
-                    <span className="text-[9px] md:text-[11px] font-bold tracking-widest text-white">FLY</span>
-                    <span className="text-[9px] md:text-[11px] font-bold tracking-widest text-white">FOIL</span>
-                    <span className="text-[5px] md:text-[6px] tracking-[0.15em] text-[#D4AF37] uppercase font-medium mt-[1px]">FORMOSA</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <img 
+              src={isDarkMode ? "/assets/logo-light.png" : "/assets/logo-dark.png"} 
+              alt="FlyFoil Formosa" 
+              className="w-20 h-20 md:w-24 md:h-24 object-contain" 
+            />
           </div>
 
           {/* Desktop Nav */}
@@ -175,13 +162,15 @@ export default function Landing() {
           <div className="absolute inset-0 bg-black/40 z-10"></div>
           <div className="absolute inset-0 bg-gradient-to-b from-navy/60 via-navy/20 to-transparent z-10"></div>
           <video 
-            src="https://sevenpalmsmarbella.com/wp-content/uploads/2023/02/efoil_seven_palms_home_intro.mov" 
             className="w-full h-full object-cover"
             autoPlay 
             muted 
             loop 
             playsInline
-          />
+          >
+            <source src="/assets/hero-video.webm" type="video/webm" />
+            <source src="https://sevenpalmsmarbella.com/wp-content/uploads/2023/02/efoil_seven_palms_home_intro.mov" />
+          </video>
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 w-full pt-32 pb-20 md:pt-24 md:pb-24 flex flex-col items-center text-center justify-center">
@@ -268,7 +257,7 @@ export default function Landing() {
           <div className={`absolute inset-0 ${isDarkMode ? 'bg-black/60' : 'bg-black/20'} z-10`}></div>
           <div className={`absolute inset-0 bg-gradient-to-b from-navy ${isDarkMode ? 'via-navy/40' : 'via-navy/10'} to-navy z-10`}></div>
           <img 
-            src="https://imgs.search.brave.com/akKet2rjsOvCKDAx0N-f3d6mXZNjt29hoh006O4MrnQ/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly93YWxs/cGFwZXJzLmNvbS9p/bWFnZXMvaGQvcG9v/bC13YXRlci1iYWNr/Z3JvdW5kLTQwMzIt/eC0zMDI0LWJkYnZs/eXoydTZwajdkZGIu/anBn" 
+            src="/assets/pool-water-bg.jpg" 
             alt="Pool water background"
             className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
@@ -701,13 +690,15 @@ export default function Landing() {
           <div className="absolute inset-0 bg-black/50 z-10"></div>
           <div className="absolute inset-0 bg-gradient-to-b from-navy via-navy/40 to-navy z-10"></div>
           <video 
-            src="https://sevenpalmsmarbella.com/wp-content/uploads/2023/02/efoil_seven_palms_home_intro.mov" 
             className="w-full h-full object-cover"
             autoPlay 
             muted 
             loop 
             playsInline
-          />
+          >
+            <source src="/assets/hero-video.webm" type="video/webm" />
+            <source src="https://sevenpalmsmarbella.com/wp-content/uploads/2023/02/efoil_seven_palms_home_intro.mov" />
+          </video>
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-6 w-full">
@@ -726,44 +717,66 @@ export default function Landing() {
               <p className="text-silver/90 text-lg font-light">Enter your details and select your preferred session.</p>
             </div>
 
-            <form className="space-y-6" onSubmit={(e) => {
+            <form className="space-y-6" onSubmit={async (e) => {
               e.preventDefault();
-              navigate('/dashboard/magic-link-123');
+              const formData = new FormData(e.currentTarget);
+              const bookingData = {
+                fullName: formData.get('fullName') as string,
+                email: formData.get('email') as string,
+                phone: formData.get('phone') as string,
+                date: formData.get('date') as string,
+                sessionTime: formData.get('sessionTime') as string,
+                location: formData.get('location') as string,
+                experience: formData.get('experience') as string,
+                wetsuitSize: 'None',
+                healthStatus: 'pending',
+                waiverStatus: 'pending',
+                flightSchool: false,
+                createdAt: new Date()
+              };
+              try {
+                const docRef = await addDoc(collection(db, 'reservations'), bookingData);
+                window.scrollTo(0, 0);
+                navigate(`/dashboard/${docRef.id}`);
+              } catch (error) {
+                console.error("Error adding reservation: ", error);
+                alert("There was an error processing your reservation. Please try again.");
+              }
             }}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-sm text-silver font-medium">Full Name</label>
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-silver/50" size={20} />
-                    <input type="text" placeholder="John Doe" className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-electric transition-colors" required />
+                    <input type="text" name="fullName" placeholder="John Doe" className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-electric transition-colors" required />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm text-silver font-medium">Email Address</label>
                   <div className="relative">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-silver/50" size={20} />
-                    <input type="email" placeholder="john@example.com" className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-electric transition-colors" required />
+                    <input type="email" name="email" placeholder="john@example.com" className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-electric transition-colors" required />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm text-silver font-medium">Phone Number</label>
                   <div className="relative">
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-silver/50" size={20} />
-                    <input type="tel" placeholder="+1 234 567 890" className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-electric transition-colors" required />
+                    <input type="tel" name="phone" placeholder="+1 234 567 890" className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-electric transition-colors" required />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm text-silver font-medium">Select Date</label>
                   <div className="relative">
                     <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-silver/50" size={20} />
-                    <input type="date" className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-electric transition-colors appearance-none" required />
+                    <input type="date" name="date" className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-electric transition-colors appearance-none" required />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm text-silver font-medium">Session Time</label>
                   <div className="relative">
                     <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-silver/50" size={20} />
-                    <select className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-electric transition-colors appearance-none" required defaultValue="">
+                    <select name="sessionTime" className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-electric transition-colors appearance-none" required defaultValue="">
                       <option value="" disabled>Select a session</option>
                       <option value="morning">Morning (10:00 - 13:00)</option>
                       <option value="evening">Evening (15:00 - 18:00)</option>
@@ -775,6 +788,7 @@ export default function Landing() {
                   <div className="relative">
                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-silver/50" size={20} />
                     <select 
+                      name="location"
                       value={activeLocation.name}
                       onChange={(e) => {
                         const loc = locations.find(l => l.name === e.target.value);
@@ -791,6 +805,7 @@ export default function Landing() {
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-sm text-silver font-medium">Experience Type</label>
                   <select 
+                    name="experience"
                     value={selectedExperience}
                     onChange={(e) => setSelectedExperience(e.target.value)}
                     className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-4 text-white focus:outline-none focus:border-electric transition-colors appearance-none"
@@ -840,26 +855,11 @@ export default function Landing() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
             <div className="col-span-1 md:col-span-2">
               <div className="flex flex-col items-start mb-6">
-                <div className="relative flex flex-col items-center justify-center w-28 h-28 rounded-full border-[1.5px] border-[#D4AF37]/60 mb-6">
-                  {/* Distressed outer ring effect */}
-                  <div className="absolute inset-[-2px] rounded-full border border-[#D4AF37]/30" style={{ clipPath: 'polygon(0% 0%, 100% 0%, 100% 90%, 0% 100%)' }}></div>
-                  <div className="absolute inset-[2px] rounded-full border border-[#D4AF37]/20" style={{ clipPath: 'polygon(10% 0%, 100% 10%, 90% 100%, 0% 90%)' }}></div>
-                  
-                  <div className="flex flex-col items-center justify-center w-full h-full pt-1">
-                    <div className="flex items-center gap-2">
-                      <svg width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-90 transition-opacity">
-                        <path d="M8 22 L 40 20 Q 42 24 24 24 L 8 24 Z" fill="none" stroke="#D4AF37" strokeWidth="2.5" strokeLinejoin="round"/>
-                        <line x1="18" y1="24" x2="18" y2="34" stroke="#D4AF37" strokeWidth="2.5"/>
-                        <path d="M12 34 L 28 34 Q 26 36 18 36 L 12 36 Z" fill="none" stroke="#D4AF37" strokeWidth="2.5" strokeLinejoin="round"/>
-                      </svg>
-                      <div className="flex flex-col items-start leading-[0.9]">
-                        <span className="text-[12px] font-bold tracking-widest text-white">FLY</span>
-                        <span className="text-[12px] font-bold tracking-widest text-white">FOIL</span>
-                        <span className="text-[7px] tracking-[0.15em] text-[#D4AF37] uppercase font-medium mt-[1px]">FORMOSA</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <img 
+                  src={isDarkMode ? "/assets/logo-light.png" : "/assets/logo-dark.png"} 
+                  alt="FlyFoil Formosa" 
+                  className="w-32 h-auto object-contain mb-6" 
+                />
                 <p className="text-silver/70 max-w-sm">
                   The ultimate noise-free, zero-emission electric hydrofoil experience in the Algarve.
                 </p>
@@ -879,6 +879,7 @@ export default function Landing() {
                 <li><button onClick={() => scrollTo('locations')} className="hover:text-electric transition-colors">Locations</button></li>
                 <li><button onClick={() => scrollTo('pricing')} className="hover:text-electric transition-colors">Pricing</button></li>
                 <li><a href="#" className="hover:text-electric transition-colors">FAQ</a></li>
+                <li><Link to="/admin" className="hover:text-electric transition-colors">Admin</Link></li>
               </ul>
             </div>
             

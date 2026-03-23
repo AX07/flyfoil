@@ -4,7 +4,7 @@
 :root {
   --theme-navy: #030B10;
   --theme-navy-light: #0A2533;
-  --theme-electric: #38E0C7;
+  --theme-electric: #C0C0C0; /* Silver */
   --theme-silver: #A0B0BA;
   --theme-white: #ffffff;
   --theme-black: #000000;
@@ -13,7 +13,7 @@
 .light-mode {
   --theme-navy: #f8fafc;
   --theme-navy-light: #e2e8f0;
-  --theme-electric: #0284c7;
+  --theme-electric: #1F2937; /* Gunmetal */
   --theme-silver: #475569;
   --theme-white: #0f172a;
   --theme-black: #ffffff;
@@ -36,6 +36,43 @@ body {
   font-family: var(--font-sans);
   overflow-x: hidden;
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Premium Metal Button Style */
+.btn-premium {
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+/* Dark Mode Version (Default) */
+.btn-premium {
+  background: linear-gradient(145deg, #e6e6e6, #c0c0c0); /* Brushed Silver */
+  color: #121212;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+.btn-premium:hover {
+  background: linear-gradient(145deg, #ffffff, #d4d4d4);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Light Mode Version */
+.light-mode .btn-premium {
+  background: linear-gradient(145deg, #2d3748, #1a202c); /* Gunmetal */
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: 1px solid #c0c0c0;
+}
+.light-mode .btn-premium:hover {
+  background: linear-gradient(145deg, #3a4a5e, #242d3d);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
 }
 
 /* Hide scrollbar for horizontal scroll areas */

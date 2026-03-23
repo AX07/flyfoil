@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // Collection: reservations
+    // Document ID: auto-generated
+    // Fields:
+    //   - fullName: string (required)
+    //   - email: string (required)
+    //   - phone: string (required)
+    //   - date: string (required)
+    //   - sessionTime: string (required)
+    //   - location: string (required)
+    //   - experience: string (required)
+    //   - wetsuitSize: string (required)
+    //   - healthStatus: string (required)
+    //   - waiverStatus: string (required)
+    //   - flightSchool: boolean (required)
+    //   - createdAt: timestamp (required)
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (request.auth.token.email == "crytoax07@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function isValidReservation(data) {
+      return data.fullName is string && data.fullName.size() > 0 && data.fullName.size() < 100 &&
+             data.email is string && data.email.size() > 0 && data.email.size() < 100 &&
+             data.phone is string && data.phone.size() > 0 && data.phone.size() < 50 &&
+             data.date is string && data.date.size() > 0 && data.date.size() < 20 &&
+             data.sessionTime is string && data.sessionTime.size() > 0 && data.sessionTime.size() < 50 &&
+             data.location is string && data.location.size() > 0 && data.location.size() < 100 &&
+             data.experience is string && data.experience.size() > 0 && data.experience.size() < 100 &&
+             data.wetsuitSize is string && data.wetsuitSize.size() > 0 && data.wetsuitSize.size() < 20 &&
+             data.healthStatus in ['pending', 'fit'] &&
+             data.waiverStatus in ['pending', 'signed'] &&
+             data.flightSchool is bool &&
+             data.createdAt is timestamp;
+    }
+
+    match /reservations/{reservationId} {
+      allow create: if hasRequiredFields(['fullName', 'email', 'phone', 'date', 'sessionTime', 'location', 'experience', 'wetsuitSize', 'healthStatus', 'waiverStatus', 'flightSchool', 'createdAt']) &&
+                       isValidReservation(request.resource.data);
+      
+      allow get: if true;
+      allow list: if isAdmin();
+
+      allow update: if isValidReservation(request.resource.data) &&
+                       request.resource.data.createdAt == resource.data.createdAt &&
+                       request.resource.data.fullName == resource.data.fullName &&
+                       request.resource.data.email == resource.data.email &&
+                       request.resource.data.phone == resource.data.phone &&
+                       request.resource.data.date == resource.data.date &&
+                       request.resource.data.sessionTime == resource.data.sessionTime &&
+                       request.resource.data.location == resource.data.location;
+                       
+      allow delete: if isAdmin();
+    }
+  }
+}
