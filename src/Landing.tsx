@@ -8,9 +8,10 @@ import {
   Menu, X, ShieldCheck, GraduationCap, Video, 
   MapPin, Calendar, CreditCard, Bitcoin, Check, 
   MessageCircle, ChevronRight, ChevronLeft, Star, Play, Waves, Compass,
-  Gift, UserCheck, LifeBuoy, Sun, Moon, User, Mail, Phone, Clock, Info
+  Gift, UserCheck, LifeBuoy, Sun, Moon, User, Mail, Phone, Clock, Info,
+  Instagram, Youtube
 } from 'lucide-react';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc, writeBatch } from 'firebase/firestore';
 import { db } from './firebase';
 
 const createCustomIcon = (isActive: boolean) => L.divIcon({
@@ -56,6 +57,39 @@ export default function Landing() {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
   const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0);
+  
+  const [selectedDate, setSelectedDate] = useState('');
+  const [availableSlots, setAvailableSlots] = useState({ morning: true, evening: true });
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [selectedSessionTime, setSelectedSessionTime] = useState('');
+
+  useEffect(() => {
+    if (!selectedDate) {
+      setAvailableSlots({ morning: true, evening: true });
+      return;
+    }
+    const checkAvailability = async () => {
+      setIsCheckingAvailability(true);
+      try {
+        const morningRef = doc(db, 'schedule', `${selectedDate}_morning`);
+        const eveningRef = doc(db, 'schedule', `${selectedDate}_evening`);
+        const [morningSnap, eveningSnap] = await Promise.all([getDoc(morningRef), getDoc(eveningRef)]);
+        
+        setAvailableSlots({
+          morning: !morningSnap.exists(),
+          evening: !eveningSnap.exists()
+        });
+        
+        // Reset selected session if it's no longer available
+        if (selectedSessionTime === 'morning' && morningSnap.exists()) setSelectedSessionTime('');
+        if (selectedSessionTime === 'evening' && eveningSnap.exists()) setSelectedSessionTime('');
+      } catch (error) {
+        console.error("Error checking availability:", error);
+      }
+      setIsCheckingAvailability(false);
+    };
+    checkAvailability();
+  }, [selectedDate]);
 
   const reviews = [
     { name: "Sarah Jenkins", role: "First-time Flyer", text: "Absolutely incredible experience! The instructors were so patient, and I was flying above the water within 20 minutes. Highly recommend to anyone visiting the Algarve.", rating: 5 },
@@ -720,12 +754,20 @@ export default function Landing() {
             <form className="space-y-6" onSubmit={async (e) => {
               e.preventDefault();
               const formData = new FormData(e.currentTarget);
+              const date = formData.get('date') as string;
+              const sessionTime = formData.get('sessionTime') as string;
+              
+              if (!date || !sessionTime) {
+                alert("Please select a date and session time.");
+                return;
+              }
+
               const bookingData = {
                 fullName: formData.get('fullName') as string,
                 email: formData.get('email') as string,
                 phone: formData.get('phone') as string,
-                date: formData.get('date') as string,
-                sessionTime: formData.get('sessionTime') as string,
+                date: date,
+                sessionTime: sessionTime,
                 location: formData.get('location') as string,
                 experience: formData.get('experience') as string,
                 wetsuitSize: 'None',
@@ -735,9 +777,34 @@ export default function Landing() {
                 createdAt: new Date()
               };
               try {
-                const docRef = await addDoc(collection(db, 'reservations'), bookingData);
+                const scheduleRef = doc(db, 'schedule', `${date}_${sessionTime}`);
+                const scheduleSnap = await getDoc(scheduleRef);
+                
+                if (scheduleSnap.exists()) {
+                  alert("Sorry, this time slot was just booked. Please select another time.");
+                  // Re-trigger availability check
+                  setSelectedDate(date + ' '); // force re-render hack or just set state
+                  setTimeout(() => setSelectedDate(date), 10);
+                  return;
+                }
+
+                const batch = writeBatch(db);
+                const reservationRef = doc(collection(db, 'reservations'));
+                
+                batch.set(reservationRef, bookingData);
+                batch.set(scheduleRef, {
+                  status: 'booked',
+                  reservationId: reservationRef.id,
+                  date: date,
+                  sessionTime: sessionTime,
+                  createdAt: new Date()
+                });
+
+                await batch.commit();
+                
+                localStorage.setItem('auth_reservation', reservationRef.id);
                 window.scrollTo(0, 0);
-                navigate(`/dashboard/${docRef.id}`);
+                navigate(`/dashboard/${reservationRef.id}`);
               } catch (error) {
                 console.error("Error adding reservation: ", error);
                 alert("There was an error processing your reservation. Please try again.");
@@ -769,17 +836,38 @@ export default function Landing() {
                   <label className="text-sm text-silver font-medium">Select Date</label>
                   <div className="relative">
                     <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-silver/50" size={20} />
-                    <input type="date" name="date" className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-electric transition-colors appearance-none" required />
+                    <input 
+                      type="date" 
+                      name="date" 
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-electric transition-colors appearance-none" 
+                      required 
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm text-silver font-medium">Session Time</label>
+                  <label className="text-sm text-silver font-medium">
+                    Session Time {isCheckingAvailability && <span className="text-electric text-xs ml-2 animate-pulse">Checking availability...</span>}
+                  </label>
                   <div className="relative">
                     <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-silver/50" size={20} />
-                    <select name="sessionTime" className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-electric transition-colors appearance-none" required defaultValue="">
-                      <option value="" disabled>Select a session</option>
-                      <option value="morning">Morning (10:00 - 13:00)</option>
-                      <option value="evening">Evening (15:00 - 18:00)</option>
+                    <select 
+                      name="sessionTime" 
+                      value={selectedSessionTime}
+                      onChange={(e) => setSelectedSessionTime(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-electric transition-colors appearance-none disabled:opacity-50" 
+                      required
+                      disabled={!selectedDate || isCheckingAvailability}
+                    >
+                      <option value="" disabled className="bg-navy text-white">Select a session</option>
+                      <option value="morning" disabled={!availableSlots.morning} className="bg-navy text-white">
+                        Morning (10:00 - 13:00) {!availableSlots.morning ? '- Fully Booked' : ''}
+                      </option>
+                      <option value="evening" disabled={!availableSlots.evening} className="bg-navy text-white">
+                        Evening (15:00 - 18:00) {!availableSlots.evening ? '- Fully Booked' : ''}
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -797,7 +885,7 @@ export default function Landing() {
                       className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-electric transition-colors appearance-none"
                     >
                       {locations.map(loc => (
-                        <option key={loc.id} value={loc.name}>{loc.name}</option>
+                        <option key={loc.id} value={loc.name} className="bg-navy text-white">{loc.name}</option>
                       ))}
                     </select>
                   </div>
@@ -810,9 +898,9 @@ export default function Landing() {
                     onChange={(e) => setSelectedExperience(e.target.value)}
                     className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-4 text-white focus:outline-none focus:border-electric transition-colors appearance-none"
                   >
-                    <option>Starter Flight (20 min) - €60</option>
-                    <option>Half Experience (30 min) - €80</option>
-                    <option>Full Experience (1h) - €150</option>
+                    <option className="bg-navy text-white">Starter Flight (20 min) - €60</option>
+                    <option className="bg-navy text-white">Half Experience (30 min) - €80</option>
+                    <option className="bg-navy text-white">Full Experience (1h) - €150</option>
                   </select>
                 </div>
               </div>
@@ -865,10 +953,12 @@ export default function Landing() {
                 </p>
               </div>
               <div className="flex gap-4">
-                {/* Social placeholders */}
-                <div className="w-10 h-10 rounded-full bg-navy-light flex items-center justify-center hover:bg-electric hover:text-navy cursor-pointer transition-colors border border-white/10">IG</div>
-                <div className="w-10 h-10 rounded-full bg-navy-light flex items-center justify-center hover:bg-electric hover:text-navy cursor-pointer transition-colors border border-white/10">FB</div>
-                <div className="w-10 h-10 rounded-full bg-navy-light flex items-center justify-center hover:bg-electric hover:text-navy cursor-pointer transition-colors border border-white/10">TT</div>
+                <a href="https://www.instagram.com/flyfoilformosa/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-navy-light flex items-center justify-center hover:bg-electric hover:text-navy cursor-pointer transition-colors border border-white/10">
+                  <Instagram size={20} />
+                </a>
+                <a href="https://www.youtube.com/@FlyFoilFormosa" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-navy-light flex items-center justify-center hover:bg-electric hover:text-navy cursor-pointer transition-colors border border-white/10">
+                  <Youtube size={20} />
+                </a>
               </div>
             </div>
             
@@ -888,8 +978,8 @@ export default function Landing() {
               <ul className="space-y-3 text-silver/70">
                 <li>FlyFoil Formosa HQ</li>
                 <li>Ria Formosa, Portugal</li>
-                <li><a href="mailto:hello@flyfoilformosa.com" className="hover:text-electric transition-colors">hello@flyfoilformosa.com</a></li>
-                <li>+351 912 345 678</li>
+                <li><a href="mailto:Flyfoilformosa@gmail.com" className="hover:text-electric transition-colors flex items-center gap-2"><Mail size={16} /> Flyfoilformosa@gmail.com</a></li>
+                <li><a href="tel:+34645349260" className="hover:text-electric transition-colors flex items-center gap-2"><Phone size={16} /> +34645349260</a></li>
               </ul>
             </div>
           </div>
@@ -906,7 +996,7 @@ export default function Landing() {
 
       {/* Floating WhatsApp Button */}
       <a 
-        href="https://wa.me/351912345678" 
+        href="https://wa.me/34645349260" 
         target="_blank" 
         rel="noopener noreferrer"
         className="fixed bottom-24 md:bottom-6 right-6 z-50 w-14 h-14 bg-[#25D366] text-[#ffffff] rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"

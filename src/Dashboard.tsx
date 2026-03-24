@@ -6,14 +6,18 @@ import {
   CheckCircle, Video, DownloadCloud, ChevronRight, Check,
   Sun, Moon, Waves, X, Compass
 } from 'lucide-react';
-import { useParams, Link, useLocation } from 'react-router-dom';
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { GoogleGenAI, Type } from '@google/genai';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from './firebase';
 
 export default function Dashboard() {
   const { id } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [bookingData, setBookingData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -21,6 +25,28 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!id) return;
+    
+    // Check for magic link token in URL
+    const searchParams = new URLSearchParams(location.search);
+    const token = searchParams.get('token');
+    
+    if (token === `magic_${id}`) {
+      // Valid magic link, save to local storage
+      localStorage.setItem('auth_reservation', id);
+      // Clean up URL
+      navigate(`/dashboard/${id}`, { replace: true });
+      return;
+    }
+    
+    // Check local storage auth
+    const authId = localStorage.getItem('auth_reservation');
+    if (authId !== id) {
+      // Not authenticated for this dashboard
+      navigate('/login');
+      return;
+    }
+
+    setIsLoading(true);
     const unsubscribe = onSnapshot(doc(db, 'reservations', id), (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
@@ -34,10 +60,18 @@ export default function Dashboard() {
           falling: data.flightSchool || false,
           equipment: data.flightSchool || false
         });
+        setNotFound(false);
+      } else {
+        setNotFound(true);
       }
+      setIsLoading(false);
+    }, (error) => {
+      console.error("Error fetching reservation:", error);
+      setNotFound(true);
+      setIsLoading(false);
     });
     return () => unsubscribe();
-  }, [id]);
+  }, [id, location.search, navigate]);
 
   const updateReservation = async (field: string, value: any) => {
     if (!id) return;
@@ -177,6 +211,34 @@ export default function Dashboard() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-navy text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-electric/30 border-t-electric rounded-full animate-spin mx-auto mb-6"></div>
+          <h2 className="text-2xl font-display font-black uppercase tracking-wider">Loading Flight Deck...</h2>
+        </div>
+      </div>
+    );
+  }
+
+  if (notFound) {
+    return (
+      <div className="min-h-screen bg-navy text-white flex flex-col items-center justify-center p-6">
+        <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-6">
+          <X className="text-red-400" size={48} />
+        </div>
+        <h1 className="text-4xl font-display font-black mb-4 uppercase text-center">Reservation Not Found</h1>
+        <p className="text-silver/80 text-center max-w-md mb-8">
+          We couldn't find a reservation with this ID. It may have been cancelled or the link is incorrect.
+        </p>
+        <Link to="/" className="btn-premium">
+          RETURN HOME
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-navy text-white selection:bg-electric selection:text-navy pb-24 transition-colors duration-300 relative">
       {/* Background Image */}
@@ -203,6 +265,15 @@ export default function Dashboard() {
           </Link>
           <div className="flex items-center gap-6">
             <div className="text-sm font-medium text-silver/80 hidden sm:block">Flight Deck</div>
+            <button 
+              onClick={() => {
+                localStorage.removeItem('auth_reservation');
+                navigate('/login');
+              }}
+              className="text-sm font-medium text-silver hover:text-white transition-colors border border-white/10 rounded-lg px-3 py-1.5 hover:bg-white/5"
+            >
+              Sign Out
+            </button>
             <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 rounded-full hover:bg-white/10 transition-colors text-white" aria-label="Toggle theme">
               {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
@@ -472,7 +543,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <span className={`text-sm transition-colors ${safetyChecks.signals ? 'text-white' : 'text-silver/80'}`}>
-                    I understand the basic hand signals for communication on the water.
+                    I understand that I have to stay clear of swimmers or any obstacle in a 100m distance.
                   </span>
                 </label>
 

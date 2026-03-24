@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Phone, ArrowRight, CheckCircle, Sun, Moon } from 'lucide-react';
+import { Mail, Phone, ArrowRight, CheckCircle, Sun, Moon, AlertCircle } from 'lucide-react';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from './firebase';
 
 export default function Login() {
   const [method, setMethod] = useState<'email' | 'phone'>('email');
   const [inputValue, setInputValue] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
     return saved !== null ? saved === 'dark' : true;
@@ -23,16 +26,50 @@ export default function Login() {
     }
   }, [isDarkMode]);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!inputValue) return;
     
-    setIsSubmitted(true);
+    setError(null);
     
-    // Simulate sending magic link and redirecting after a short delay
-    setTimeout(() => {
-      navigate('/dashboard/magic-link-123');
-    }, 2000);
+    try {
+      const q = query(
+        collection(db, 'reservations'),
+        where(method === 'email' ? 'email' : 'phone', '==', inputValue)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        setError(`No reservation found with this ${method}.`);
+        return;
+      }
+      
+      // Use the first matching reservation
+      const reservationId = querySnapshot.docs[0].id;
+      
+      setIsSubmitted(true);
+      
+      // Simulate sending magic link by showing it on screen (since we can't actually send emails/SMS here)
+      setMagicLink(`/dashboard/${reservationId}?token=magic_${reservationId}`);
+      
+    } catch (err) {
+      console.error("Error querying reservations:", err);
+      setError("An error occurred while looking up your reservation.");
+    }
+  };
+
+  const [magicLink, setMagicLink] = useState<string | null>(null);
+
+  const handleMagicLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    if (magicLink) {
+      const resId = magicLink.split('?')[0].split('/').pop();
+      if (resId) {
+        localStorage.setItem('auth_reservation', resId);
+        navigate(magicLink);
+      }
+    }
   };
 
   return (
@@ -81,9 +118,19 @@ export default function Login() {
               <p className="text-silver/80 mb-6">
                 Check your {method === 'email' ? 'inbox' : 'messages'} for the secure link to access your Flight Deck.
               </p>
-              <div className="text-xs text-silver/50 uppercase tracking-widest">
-                Redirecting to your dashboard...
-              </div>
+              
+              {magicLink && (
+                <div className="mt-8 p-6 bg-navy-light/50 border border-electric/30 rounded-xl">
+                  <p className="text-xs text-silver mb-3 uppercase tracking-widest">Simulated Inbox / SMS</p>
+                  <a 
+                    href={magicLink}
+                    onClick={handleMagicLinkClick}
+                    className="block w-full py-3 bg-electric text-navy font-bold rounded-lg hover:bg-electric/90 transition-colors"
+                  >
+                    Click here to Login
+                  </a>
+                </div>
+              )}
             </motion.div>
           ) : (
             <>
@@ -108,6 +155,13 @@ export default function Login() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
+                {error && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3 text-red-400 text-sm">
+                    <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                    <p>{error}</p>
+                  </div>
+                )}
+                
                 <div className="space-y-2">
                   <label className="text-sm text-silver font-medium">
                     {method === 'email' ? 'Email Address' : 'Phone Number'}
@@ -129,12 +183,21 @@ export default function Login() {
                   </div>
                 </div>
 
-                <button 
-                  type="submit" 
-                  className="btn-premium w-full text-sm"
-                >
-                  SEND MAGIC LINK <ArrowRight size={18} />
-                </button>
+                <div className="space-y-4">
+                  <button 
+                    type="submit" 
+                    className="btn-premium w-full text-sm flex items-center justify-center gap-2"
+                  >
+                    SEND MAGIC LINK <ArrowRight size={18} />
+                  </button>
+                  
+                  <a 
+                    href="/#booking"
+                    className="w-full py-4 rounded-xl border border-white/10 text-white font-bold tracking-widest uppercase text-sm hover:bg-white/5 transition-colors flex items-center justify-center"
+                  >
+                    BOOK A SESSION
+                  </a>
+                </div>
               </form>
             </>
           )}

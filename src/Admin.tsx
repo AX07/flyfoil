@@ -3,10 +3,10 @@ import { motion } from 'motion/react';
 import { 
   Users, Calendar, Clock, MapPin, 
   CheckCircle, XCircle, Shirt, Search,
-  Filter, ChevronDown, Activity, FileSignature, BookOpen, LogIn
+  Filter, ChevronDown, Activity, FileSignature, BookOpen, LogIn, CalendarX
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'firebase/auth';
 import { db, auth } from './firebase';
 
@@ -14,13 +14,18 @@ export default function Admin() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDate, setFilterDate] = useState('all');
   const [reservations, setReservations] = useState<any[]>([]);
+  const [schedule, setSchedule] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [blockDate, setBlockDate] = useState('');
+  const [blockSession, setBlockSession] = useState('morning');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setIsAuthReady(true);
+      setAccessDenied(false); // Reset on auth change
     });
     return () => unsubscribe();
   }, []);
@@ -29,17 +34,33 @@ export default function Admin() {
     if (!isAuthReady || !user) return;
 
     const q = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribeRes = onSnapshot(q, (snapshot) => {
       const resData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
       setReservations(resData);
-    }, (error) => {
+      setAccessDenied(false);
+    }, (error: any) => {
       console.error("Error fetching reservations: ", error);
+      if (error.code === 'permission-denied' || error.message.includes('Missing or insufficient permissions')) {
+        setAccessDenied(true);
+      }
     });
 
-    return () => unsubscribe();
+    const qSchedule = query(collection(db, 'schedule'));
+    const unsubscribeSchedule = onSnapshot(qSchedule, (snapshot) => {
+      const schedData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setSchedule(schedData);
+    });
+
+    return () => {
+      unsubscribeRes();
+      unsubscribeSchedule();
+    };
   }, [isAuthReady, user]);
 
   const handleLogin = async () => {
@@ -56,6 +77,36 @@ export default function Admin() {
       await signOut(auth);
     } catch (error) {
       console.error("Error signing out", error);
+    }
+  };
+
+  const handleBlockSlot = async (e: any) => {
+    e.preventDefault();
+    if (!blockDate || !blockSession) return;
+    
+    try {
+      const slotId = `${blockDate}_${blockSession}`;
+      await setDoc(doc(db, 'schedule', slotId), {
+        status: 'blocked',
+        date: blockDate,
+        sessionTime: blockSession,
+        createdAt: new Date()
+      });
+      setBlockDate('');
+      alert(`Successfully blocked ${blockSession} on ${blockDate}`);
+    } catch (error) {
+      console.error("Error blocking slot:", error);
+      alert("Failed to block slot. Check permissions.");
+    }
+  };
+
+  const handleUnblockSlot = async (slotId: string) => {
+    if (!window.confirm("Are you sure you want to unblock this slot?")) return;
+    try {
+      await deleteDoc(doc(db, 'schedule', slotId));
+    } catch (error) {
+      console.error("Error unblocking slot:", error);
+      alert("Failed to unblock slot.");
     }
   };
 
@@ -76,6 +127,29 @@ export default function Admin() {
           >
             <LogIn size={18} /> Sign In with Google
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen bg-navy flex items-center justify-center text-white p-6">
+        <div className="bg-white/5 border border-red-500/20 rounded-2xl p-8 max-w-md w-full text-center">
+          <XCircle className="text-red-400 mx-auto mb-4" size={48} />
+          <h1 className="text-2xl font-display font-bold mb-2 uppercase text-red-400">Access Denied</h1>
+          <p className="text-silver/80 mb-8 text-sm">You do not have administrator privileges to view this page. Please sign in with an authorized account.</p>
+          <div className="flex flex-col gap-3">
+            <button 
+              onClick={handleLogout}
+              className="w-full py-3 bg-white/10 text-white font-bold rounded-xl text-sm hover:bg-white/20 transition-colors"
+            >
+              Sign Out
+            </button>
+            <Link to="/" className="w-full py-3 bg-transparent border border-white/10 text-white font-bold rounded-xl text-sm hover:bg-white/5 transition-colors">
+              Return Home
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -137,6 +211,71 @@ export default function Admin() {
       </header>
 
       <main className="max-w-7xl mx-auto px-6 pt-12">
+        {/* Schedule Management */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="flex items-center gap-3 text-silver mb-6">
+            <CalendarX size={20} className="text-red-400" />
+            <h2 className="text-lg font-display font-bold uppercase tracking-wider text-white">Schedule Management</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <h3 className="text-sm font-medium text-silver mb-4 uppercase tracking-wider">Block a Time Slot</h3>
+              <form onSubmit={handleBlockSlot} className="flex flex-col sm:flex-row gap-4">
+                <input 
+                  type="date" 
+                  value={blockDate}
+                  onChange={(e) => setBlockDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-electric transition-colors appearance-none flex-1"
+                  required
+                />
+                <select 
+                  value={blockSession}
+                  onChange={(e) => setBlockSession(e.target.value)}
+                  className="bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-electric transition-colors appearance-none flex-1"
+                  required
+                >
+                  <option value="morning" className="bg-navy text-white">Morning</option>
+                  <option value="evening" className="bg-navy text-white">Evening</option>
+                </select>
+                <button 
+                  type="submit"
+                  className="px-6 py-3 bg-red-500/20 text-red-400 border border-red-500/50 font-bold rounded-xl text-sm hover:bg-red-500/30 transition-colors whitespace-nowrap"
+                >
+                  Block Slot
+                </button>
+              </form>
+            </div>
+            
+            <div>
+              <h3 className="text-sm font-medium text-silver mb-4 uppercase tracking-wider">Currently Blocked Slots</h3>
+              <div className="bg-navy-light/50 border border-white/5 rounded-xl p-4 max-h-40 overflow-y-auto">
+                {schedule.filter(s => s.status === 'blocked').length === 0 ? (
+                  <p className="text-silver/50 text-sm italic">No slots currently blocked.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {schedule.filter(s => s.status === 'blocked').sort((a, b) => a.date.localeCompare(b.date)).map(slot => (
+                      <div key={slot.id} className="flex items-center justify-between bg-white/5 rounded-lg p-3 border border-white/5">
+                        <div className="flex items-center gap-3 text-sm">
+                          <span className="text-white font-medium">{slot.date}</span>
+                          <span className="text-silver capitalize">{slot.sessionTime}</span>
+                        </div>
+                        <button 
+                          onClick={() => handleUnblockSlot(slot.id)}
+                          className="text-xs text-red-400 hover:text-red-300 transition-colors uppercase tracking-wider font-bold"
+                        >
+                          Unblock
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white/5 border border-white/10 rounded-2xl p-6">

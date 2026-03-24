@@ -19,6 +19,15 @@ service cloud.firestore {
     //   - waiverStatus: string (required)
     //   - flightSchool: boolean (required)
     //   - createdAt: timestamp (required)
+    //
+    // Collection: schedule
+    // Document ID: {date}_{sessionTime}
+    // Fields:
+    //   - status: string (required, 'booked' or 'blocked')
+    //   - date: string (required)
+    //   - sessionTime: string (required)
+    //   - reservationId: string (optional)
+    //   - createdAt: string (required)
     // ===============================================================
 
     function isAuthenticated() {
@@ -27,7 +36,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() &&
-        (request.auth.token.email == "crytoax07@gmail.com" && request.auth.token.email_verified == true);
+        (request.auth.token.email == "flyfoilformosa@gmail.com" && request.auth.token.email_verified == true);
     }
 
     function hasRequiredFields(fields) {
@@ -49,12 +58,28 @@ service cloud.firestore {
              data.createdAt is timestamp;
     }
 
+    match /schedule/{slotId} {
+      // Anyone can read availability
+      allow read: if true;
+      
+      // Admins can do anything
+      // Users can create a slot ONLY IF they are also creating a reservation in the same batch
+      allow create: if isAdmin() || (
+        !exists(/databases/$(database)/documents/schedule/$(slotId)) &&
+        request.resource.data.status == 'booked' &&
+        hasRequiredFields(['status', 'date', 'sessionTime', 'reservationId', 'createdAt']) &&
+        getAfter(/databases/$(database)/documents/reservations/$(request.resource.data.reservationId)) != null
+      );
+      
+      allow update, delete: if isAdmin();
+    }
+
     match /reservations/{reservationId} {
       allow create: if hasRequiredFields(['fullName', 'email', 'phone', 'date', 'sessionTime', 'location', 'experience', 'wetsuitSize', 'healthStatus', 'waiverStatus', 'flightSchool', 'createdAt']) &&
                        isValidReservation(request.resource.data);
       
       allow get: if true;
-      allow list: if isAdmin();
+      allow list: if true; // Prototype only: allows querying by email/phone
 
       allow update: if isValidReservation(request.resource.data) &&
                        request.resource.data.createdAt == resource.data.createdAt &&
