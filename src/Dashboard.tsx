@@ -487,7 +487,7 @@ export default function Dashboard() {
                 onClick={() => setShowWaiverPopup(true)}
                 className={`w-full py-3 font-bold rounded-xl text-sm flex items-center justify-center gap-2 transition-colors ${
                   waiverStatus === 'signed' 
-                    ? 'bg-electric/20 text-electric border border-electric/50' 
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
                     : 'bg-white/10 text-white border border-white/20 hover:bg-white/20'
                 }`}
               >
@@ -505,7 +505,7 @@ export default function Dashboard() {
                 onClick={() => setShowExperiencePopup(true)}
                 className={`w-full py-3 font-bold rounded-xl text-sm flex items-center justify-center gap-2 transition-colors ${
                   experienceLevel 
-                    ? 'bg-electric/20 text-electric border border-electric/50' 
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
                     : 'bg-white/10 text-white border border-white/20 hover:bg-white/20'
                 }`}
               >

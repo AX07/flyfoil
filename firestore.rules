@@ -36,7 +36,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() &&
-        (request.auth.token.email == "flyfoilformosa@gmail.com" && request.auth.token.email_verified == true);
+        (request.auth.token.email == "flyfoilformosa@gmail.com" || request.auth.token.email == "crytoax07@gmail.com");
     }
 
     function hasRequiredFields(fields) {
@@ -81,14 +81,14 @@ service cloud.firestore {
       allow get: if true;
       allow list: if true; // Prototype only: allows querying by email/phone
 
-      allow update: if isValidReservation(request.resource.data) &&
+      allow update: if isAdmin() || (isValidReservation(request.resource.data) &&
                        request.resource.data.createdAt == resource.data.createdAt &&
                        request.resource.data.fullName == resource.data.fullName &&
                        request.resource.data.email == resource.data.email &&
                        request.resource.data.phone == resource.data.phone &&
                        request.resource.data.date == resource.data.date &&
                        request.resource.data.sessionTime == resource.data.sessionTime &&
-                       request.resource.data.location == resource.data.location;
+                       request.resource.data.location == resource.data.location);
                        
       allow delete: if isAdmin();
     }

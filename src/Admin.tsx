@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
   Users, Calendar, Clock, MapPin, 
   CheckCircle, XCircle, Shirt, Search,
-  Filter, ChevronDown, Activity, FileSignature, BookOpen, LogIn, CalendarX
+  Filter, ChevronDown, Activity, FileSignature, BookOpen, LogIn, CalendarX, Edit2, Trash2, Plus
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { collection, onSnapshot, query, orderBy, doc, setDoc, deleteDoc } from 'firebase/firestore';
-import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'firebase/auth';
+import { collection, onSnapshot, query, orderBy, doc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, signInWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from './firebase';
 
 export default function Admin() {
@@ -20,6 +20,19 @@ export default function Admin() {
   const [accessDenied, setAccessDenied] = useState(false);
   const [blockDate, setBlockDate] = useState('');
   const [blockSession, setBlockSession] = useState('morning');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [confirmAction, setConfirmAction] = useState<{message: string, onConfirm: () => void} | null>(null);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    date: '',
+    sessionTime: '',
+    location: ''
+  });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -65,10 +78,31 @@ export default function Admin() {
 
   const handleLogin = async () => {
     const provider = new GoogleAuthProvider();
+    setAuthError('');
     try {
       await signInWithPopup(auth, provider);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error signing in with Google", error);
+      setAuthError(error.message || "Failed to sign in with Google");
+    }
+  };
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error: any) {
+      console.error("Error signing in with email", error);
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+        setAuthError("Invalid email or password. If you haven't created an account yet, please do so in the Firebase Console.");
+      } else if (error.code === 'auth/wrong-password') {
+        setAuthError("Incorrect password.");
+      } else if (error.code === 'auth/operation-not-allowed') {
+        setAuthError("Email/Password sign-in is not enabled. Please go to your Firebase Console -> Authentication -> Sign-in method, and enable 'Email/Password'.");
+      } else {
+        setAuthError(error.message || "Failed to sign in with email/password");
+      }
     }
   };
 
@@ -93,20 +127,146 @@ export default function Admin() {
         createdAt: new Date()
       });
       setBlockDate('');
-      alert(`Successfully blocked ${blockSession} on ${blockDate}`);
+      setAlertMessage(`Successfully blocked ${blockSession} on ${blockDate}`);
     } catch (error) {
       console.error("Error blocking slot:", error);
-      alert("Failed to block slot. Check permissions.");
+      setAlertMessage("Failed to block slot. Check permissions.");
     }
   };
 
   const handleUnblockSlot = async (slotId: string) => {
-    if (!window.confirm("Are you sure you want to unblock this slot?")) return;
+    setConfirmAction({
+      message: "Are you sure you want to unblock this slot?",
+      onConfirm: async () => {
+        try {
+          await deleteDoc(doc(db, 'schedule', slotId));
+        } catch (error) {
+          console.error("Error unblocking slot:", error);
+          setAlertMessage("Failed to unblock slot.");
+        }
+      }
+    });
+  };
+
+  const handleDeleteUser = async (id: string, date: string, sessionTime: string) => {
+    setConfirmAction({
+      message: "Are you sure you want to delete this reservation? This cannot be undone.",
+      onConfirm: async () => {
+        try {
+          await deleteDoc(doc(db, 'reservations', id));
+          // Also free up the schedule slot
+          const slotId = `${date}_${sessionTime}`;
+          await deleteDoc(doc(db, 'schedule', slotId));
+        } catch (error) {
+          console.error("Error deleting reservation:", error);
+          setAlertMessage("Failed to delete reservation.");
+        }
+      }
+    });
+  };
+
+  const openEditModal = (res: any) => {
+    setEditingUser(res);
+    setEditFormData({
+      date: res.date,
+      sessionTime: res.sessionTime,
+      location: res.location
+    });
+  };
+
+  const [addFormData, setAddFormData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    date: '',
+    sessionTime: 'morning',
+    location: 'Ria Formosa (Faro)',
+    experience: 'Beginner (No experience)',
+    wetsuitSize: 'None'
+  });
+
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
-      await deleteDoc(doc(db, 'schedule', slotId));
+      // Create a unique ID for the reservation
+      const reservationId = `RES-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+      
+      // Check if slot is available
+      const slotId = `${addFormData.date}_${addFormData.sessionTime}`;
+      const slotExists = schedule.find(s => s.id === slotId);
+      
+      if (slotExists) {
+        alert("This time slot is already booked or blocked.");
+        return;
+      }
+
+      // Book the slot
+      await setDoc(doc(db, 'schedule', slotId), {
+        status: 'booked',
+        date: addFormData.date,
+        sessionTime: addFormData.sessionTime,
+        reservationId: reservationId,
+        createdAt: new Date()
+      });
+
+      // Create reservation
+      await setDoc(doc(db, 'reservations', reservationId), {
+        ...addFormData,
+        healthStatus: 'pending',
+        waiverStatus: 'pending',
+        flightSchool: false,
+        createdAt: new Date()
+      });
+
+      setShowAddUserModal(false);
+      setAddFormData({
+        fullName: '',
+        email: '',
+        phone: '',
+        date: '',
+        sessionTime: 'morning',
+        location: 'Ria Formosa (Faro)',
+        experience: 'Beginner (No experience)',
+        wetsuitSize: 'None'
+      });
+      alert("User added successfully!");
     } catch (error) {
-      console.error("Error unblocking slot:", error);
-      alert("Failed to unblock slot.");
+      console.error("Error adding user:", error);
+      alert("Failed to add user.");
+    }
+  };
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    
+    try {
+      // If date or time changed, we need to update the schedule slots
+      if (editFormData.date !== editingUser.date || editFormData.sessionTime !== editingUser.sessionTime) {
+        // Free old slot
+        const oldSlotId = `${editingUser.date}_${editingUser.sessionTime}`;
+        await deleteDoc(doc(db, 'schedule', oldSlotId));
+        
+        // Book new slot
+        const newSlotId = `${editFormData.date}_${editFormData.sessionTime}`;
+        await setDoc(doc(db, 'schedule', newSlotId), {
+          status: 'booked',
+          date: editFormData.date,
+          sessionTime: editFormData.sessionTime,
+          reservationId: editingUser.id,
+          createdAt: new Date()
+        });
+      }
+
+      await updateDoc(doc(db, 'reservations', editingUser.id), {
+        date: editFormData.date,
+        sessionTime: editFormData.sessionTime,
+        location: editFormData.location
+      });
+      
+      setEditingUser(null);
+    } catch (error) {
+      console.error("Error updating reservation:", error);
+      setAlertMessage("Failed to update reservation.");
     }
   };
 
@@ -114,13 +274,58 @@ export default function Admin() {
     return <div className="min-h-screen bg-navy flex items-center justify-center text-white">Loading...</div>;
   }
 
+  const ALLOWED_EMAILS = ['flyfoilformosa@gmail.com', 'crytoax07@gmail.com'];
+  const isAdminUser = user && user.email && ALLOWED_EMAILS.includes(user.email);
+
   if (!user) {
     return (
       <div className="min-h-screen bg-navy flex items-center justify-center text-white p-6">
         <div className="bg-white/5 border border-white/10 rounded-2xl p-8 max-w-md w-full text-center">
           <img src="/assets/logo-light.png" alt="FlyFoil Formosa" className="h-12 w-auto mx-auto mb-6" />
           <h1 className="text-2xl font-display font-bold mb-2 uppercase">Admin Access</h1>
-          <p className="text-silver/80 mb-8 text-sm">Please sign in with your administrator account to access the Flight Deck.</p>
+          <p className="text-silver/80 mb-6 text-sm">Please sign in with your administrator account to access the Flight Deck.</p>
+          
+          {authError && (
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm text-left">
+              {authError}
+            </div>
+          )}
+
+          <form onSubmit={handleEmailLogin} className="space-y-4 mb-6 text-left">
+            <div>
+              <label className="block text-sm text-silver mb-1">Email</label>
+              <input 
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-electric"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-silver mb-1">Password</label>
+              <input 
+                type="password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-electric"
+                required
+              />
+            </div>
+            <button 
+              type="submit"
+              className="w-full py-3 bg-white text-navy font-bold rounded-xl text-sm hover:bg-silver transition-colors flex items-center justify-center gap-2"
+            >
+              <LogIn size={18} /> Sign In
+            </button>
+          </form>
+
+          <div className="relative flex items-center py-2 mb-6">
+            <div className="flex-grow border-t border-white/10"></div>
+            <span className="flex-shrink-0 mx-4 text-silver/50 text-xs uppercase">Or</span>
+            <div className="flex-grow border-t border-white/10"></div>
+          </div>
+
           <button 
             onClick={handleLogin}
             className="w-full py-3 bg-electric text-navy font-bold rounded-xl text-sm hover:bg-electric/90 transition-colors flex items-center justify-center gap-2"
@@ -132,7 +337,7 @@ export default function Admin() {
     );
   }
 
-  if (accessDenied) {
+  if (accessDenied || (user && !isAdminUser)) {
     return (
       <div className="min-h-screen bg-navy flex items-center justify-center text-white p-6">
         <div className="bg-white/5 border border-red-500/20 rounded-2xl p-8 max-w-md w-full text-center">
@@ -327,6 +532,12 @@ export default function Admin() {
             />
           </div>
           <div className="flex gap-4 w-full md:w-auto">
+            <button
+              onClick={() => setShowAddUserModal(true)}
+              className="px-6 py-3 bg-electric text-navy font-bold rounded-xl text-sm hover:bg-electric/90 transition-colors flex items-center gap-2 whitespace-nowrap"
+            >
+              <Plus size={18} /> Add User
+            </button>
             <div className="relative w-full md:w-48">
               <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-silver/50" size={18} />
               <select 
@@ -354,6 +565,7 @@ export default function Admin() {
                   <th className="p-4 text-xs font-medium text-silver uppercase tracking-wider">Session Details</th>
                   <th className="p-4 text-xs font-medium text-silver uppercase tracking-wider">Experience & Gear</th>
                   <th className="p-4 text-xs font-medium text-silver uppercase tracking-wider">Clearance Status</th>
+                  <th className="p-4 text-xs font-medium text-silver uppercase tracking-wider text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -415,18 +627,36 @@ export default function Admin() {
                         </div>
                       </div>
                     </td>
+                    <td className="p-4 align-top text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button 
+                          onClick={() => openEditModal(res)}
+                          className="p-2 text-silver hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+                          title="Edit Reservation"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteUser(res.id, res.date, res.sessionTime)}
+                          className="p-2 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors"
+                          title="Delete Reservation"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
                   </motion.tr>
                 ))}
                 
                 {reservations.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="p-8 text-center text-silver font-bold text-xl">
+                    <td colSpan={5} className="p-8 text-center text-silver font-bold text-xl">
                       None
                     </td>
                   </tr>
                 ) : filteredReservations.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="p-8 text-center text-silver">
+                    <td colSpan={5} className="p-8 text-center text-silver">
                       No reservations found matching your criteria.
                     </td>
                   </tr>
@@ -436,6 +666,277 @@ export default function Admin() {
           </div>
         </div>
       </main>
+
+      {/* Edit User Modal */}
+      {editingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-navy border border-white/10 rounded-2xl p-6 max-w-md w-full"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-display font-bold uppercase">Edit Reservation</h2>
+              <button onClick={() => setEditingUser(null)} className="text-silver hover:text-white">
+                <XCircle size={24} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleUpdateUser} className="space-y-4">
+              <div>
+                <label className="block text-sm text-silver mb-1">Date</label>
+                <input 
+                  type="date" 
+                  value={editFormData.date}
+                  onChange={(e) => setEditFormData({...editFormData, date: e.target.value})}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-electric"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm text-silver mb-1">Session Time</label>
+                <select 
+                  value={editFormData.sessionTime}
+                  onChange={(e) => setEditFormData({...editFormData, sessionTime: e.target.value})}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-electric appearance-none"
+                  required
+                >
+                  <option value="morning" className="bg-navy">Morning (10:00 - 13:00)</option>
+                  <option value="evening" className="bg-navy">Evening (15:00 - 18:00)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm text-silver mb-1">Location</label>
+                <select 
+                  value={editFormData.location}
+                  onChange={(e) => setEditFormData({...editFormData, location: e.target.value})}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-electric appearance-none"
+                  required
+                >
+                  <option value="Ria Formosa (Faro)" className="bg-navy">Ria Formosa (Faro)</option>
+                  <option value="Vilamoura Marina" className="bg-navy">Vilamoura Marina</option>
+                  <option value="Quinta do Lago" className="bg-navy">Quinta do Lago</option>
+                </select>
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setEditingUser(null)}
+                  className="flex-1 py-3 bg-white/10 text-white font-bold rounded-xl text-sm hover:bg-white/20 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="flex-1 py-3 bg-electric text-navy font-bold rounded-xl text-sm hover:bg-electric/90 transition-colors"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Add User Modal */}
+      {showAddUserModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-navy border border-white/10 rounded-2xl p-6 max-w-2xl w-full my-8"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-display font-bold uppercase">Add New Reservation</h2>
+              <button onClick={() => setShowAddUserModal(false)} className="text-silver hover:text-white">
+                <XCircle size={24} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleAddUser} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-silver mb-1">Full Name</label>
+                  <input 
+                    type="text" 
+                    value={addFormData.fullName}
+                    onChange={(e) => setAddFormData({...addFormData, fullName: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-electric"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-silver mb-1">Email</label>
+                  <input 
+                    type="email" 
+                    value={addFormData.email}
+                    onChange={(e) => setAddFormData({...addFormData, email: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-electric"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-silver mb-1">Phone</label>
+                  <input 
+                    type="tel" 
+                    value={addFormData.phone}
+                    onChange={(e) => setAddFormData({...addFormData, phone: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-electric"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-silver mb-1">Date</label>
+                  <input 
+                    type="date" 
+                    value={addFormData.date}
+                    onChange={(e) => setAddFormData({...addFormData, date: e.target.value})}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-electric"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-silver mb-1">Session Time</label>
+                  <select 
+                    value={addFormData.sessionTime}
+                    onChange={(e) => setAddFormData({...addFormData, sessionTime: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-electric appearance-none"
+                    required
+                  >
+                    <option value="morning" className="bg-navy">Morning (10:00 - 13:00)</option>
+                    <option value="evening" className="bg-navy">Evening (15:00 - 18:00)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-silver mb-1">Location</label>
+                  <select 
+                    value={addFormData.location}
+                    onChange={(e) => setAddFormData({...addFormData, location: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-electric appearance-none"
+                    required
+                  >
+                    <option value="Ria Formosa (Faro)" className="bg-navy">Ria Formosa (Faro)</option>
+                    <option value="Vilamoura Marina" className="bg-navy">Vilamoura Marina</option>
+                    <option value="Quinta do Lago" className="bg-navy">Quinta do Lago</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-silver mb-1">Experience Level</label>
+                  <select 
+                    value={addFormData.experience}
+                    onChange={(e) => setAddFormData({...addFormData, experience: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-electric appearance-none"
+                    required
+                  >
+                    <option value="Beginner (No experience)" className="bg-navy">Beginner (No experience)</option>
+                    <option value="Intermediate (Some board sports)" className="bg-navy">Intermediate (Some board sports)</option>
+                    <option value="Advanced (Foil experience)" className="bg-navy">Advanced (Foil experience)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-silver mb-1">Wetsuit Size</label>
+                  <select 
+                    value={addFormData.wetsuitSize}
+                    onChange={(e) => setAddFormData({...addFormData, wetsuitSize: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-electric appearance-none"
+                    required
+                  >
+                    <option value="None" className="bg-navy">No Wetsuit Needed</option>
+                    <option value="XS" className="bg-navy">Size XS</option>
+                    <option value="S" className="bg-navy">Size S</option>
+                    <option value="M" className="bg-navy">Size M</option>
+                    <option value="L" className="bg-navy">Size L</option>
+                    <option value="XL" className="bg-navy">Size XL</option>
+                    <option value="XXL" className="bg-navy">Size XXL</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setShowAddUserModal(false)}
+                  className="flex-1 py-3 bg-white/10 text-white font-bold rounded-xl text-sm hover:bg-white/20 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="flex-1 py-3 bg-electric text-navy font-bold rounded-xl text-sm hover:bg-electric/90 transition-colors"
+                >
+                  Add Reservation
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Alert Modal */}
+      {alertMessage && (
+        <div className="fixed inset-0 bg-navy/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-navy border border-white/10 rounded-2xl p-6 max-w-sm w-full"
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-display font-bold text-white">Notice</h3>
+              <button onClick={() => setAlertMessage(null)} className="text-silver hover:text-white">
+                <XCircle size={24} />
+              </button>
+            </div>
+            <p className="text-silver mb-6">{alertMessage}</p>
+            <button 
+              onClick={() => setAlertMessage(null)}
+              className="w-full py-3 bg-electric text-navy font-bold rounded-xl text-sm hover:bg-electric/90 transition-colors"
+            >
+              OK
+            </button>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Confirm Modal */}
+      {confirmAction && (
+        <div className="fixed inset-0 bg-navy/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-navy border border-white/10 rounded-2xl p-6 max-w-sm w-full"
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-display font-bold text-white">Confirm Action</h3>
+              <button onClick={() => setConfirmAction(null)} className="text-silver hover:text-white">
+                <XCircle size={24} />
+              </button>
+            </div>
+            <p className="text-silver mb-6">{confirmAction.message}</p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setConfirmAction(null)}
+                className="flex-1 py-3 bg-white/10 text-white font-bold rounded-xl text-sm hover:bg-white/20 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => {
+                  confirmAction.onConfirm();
+                  setConfirmAction(null);
+                }}
+                className="flex-1 py-3 bg-red-500 text-white font-bold rounded-xl text-sm hover:bg-red-600 transition-colors"
+              >
+                Confirm
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
