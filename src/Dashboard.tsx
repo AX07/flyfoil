@@ -250,6 +250,7 @@ export default function Dashboard() {
           alt="Pool water background"
           className="w-full h-full object-cover"
           referrerPolicy="no-referrer"
+          loading="lazy"
         />
       </div>
 

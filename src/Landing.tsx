@@ -295,6 +295,7 @@ export default function Landing() {
             alt="Pool water background"
             className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
+            loading="lazy"
           />
         </div>
 
@@ -636,6 +637,7 @@ export default function Landing() {
                       src={`https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`} 
                       alt="Video thumbnail"
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                     <div className="absolute inset-0 bg-navy/40 mix-blend-overlay group-hover:bg-navy/20 transition-colors"></div>
                   </div>
@@ -947,6 +949,7 @@ export default function Landing() {
                   src={isDarkMode ? "/assets/logo-light.png" : "/assets/logo-dark.png"} 
                   alt="FlyFoil Formosa" 
                   className="w-32 h-auto object-contain mb-6" 
+                  loading="lazy"
                 />
                 <p className="text-silver/70 max-w-sm">
                   The ultimate noise-free, zero-emission electric hydrofoil experience in the Algarve.

@@ -180,7 +180,7 @@ export default function Admin() {
     phone: '',
     date: '',
     sessionTime: 'morning',
-    location: 'Ria Formosa (Faro)',
+    location: 'Cabanas de Tavira',
     experience: 'Beginner (No experience)',
     wetsuitSize: 'None'
   });
@@ -716,9 +716,11 @@ export default function Admin() {
                   className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-electric appearance-none"
                   required
                 >
-                  <option value="Ria Formosa (Faro)" className="bg-navy">Ria Formosa (Faro)</option>
-                  <option value="Vilamoura Marina" className="bg-navy">Vilamoura Marina</option>
-                  <option value="Quinta do Lago" className="bg-navy">Quinta do Lago</option>
+                  <option value="Beliche Lake" className="bg-navy">Beliche Lake</option>
+                  <option value="Fuseta" className="bg-navy">Fuseta</option>
+                  <option value="Cabanas de Tavira" className="bg-navy">Cabanas de Tavira</option>
+                  <option value="Altura" className="bg-navy">Altura</option>
+                  <option value="The Cross-Border Special" className="bg-navy">The Cross-Border Special</option>
                 </select>
               </div>
 
@@ -820,9 +822,11 @@ export default function Admin() {
                     className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-electric appearance-none"
                     required
                   >
-                    <option value="Ria Formosa (Faro)" className="bg-navy">Ria Formosa (Faro)</option>
-                    <option value="Vilamoura Marina" className="bg-navy">Vilamoura Marina</option>
-                    <option value="Quinta do Lago" className="bg-navy">Quinta do Lago</option>
+                    <option value="Beliche Lake" className="bg-navy">Beliche Lake</option>
+                    <option value="Fuseta" className="bg-navy">Fuseta</option>
+                    <option value="Cabanas de Tavira" className="bg-navy">Cabanas de Tavira</option>
+                    <option value="Altura" className="bg-navy">Altura</option>
+                    <option value="The Cross-Border Special" className="bg-navy">The Cross-Border Special</option>
                   </select>
                 </div>
                 <div>

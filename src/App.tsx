@@ -1,11 +1,13 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import { AnimatePresence } from 'motion/react';
 import Landing from './Landing';
-import Dashboard from './Dashboard';
-import Login from './Login';
 import LoadingScreen from './LoadingScreen';
-import Admin from './Admin';
+
+// Lazy load secondary routes for better initial load performance
+const Dashboard = lazy(() => import('./Dashboard'));
+const Login = lazy(() => import('./Login'));
+const Admin = lazy(() => import('./Admin'));
 
 function AppContent() {
   const location = useLocation();
@@ -82,12 +84,14 @@ function AppContent() {
         {isLoading && <LoadingScreen key="loading" />}
       </AnimatePresence>
       
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/dashboard/:id" element={<Dashboard />} />
-        <Route path="/admin" element={<Admin />} />
-      </Routes>
+      <Suspense fallback={<LoadingScreen />}>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/dashboard/:id" element={<Dashboard />} />
+          <Route path="/admin" element={<Admin />} />
+        </Routes>
+      </Suspense>
     </>
   );
 }
