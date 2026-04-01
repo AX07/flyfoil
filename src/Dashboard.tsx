@@ -10,6 +10,7 @@ import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { GoogleGenAI, Type } from '@google/genai';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from './firebase';
+import NotFound from './NotFound';
 
 export default function Dashboard() {
   const { id } = useParams();
@@ -223,20 +224,7 @@ export default function Dashboard() {
   }
 
   if (notFound) {
-    return (
-      <div className="min-h-screen bg-navy text-white flex flex-col items-center justify-center p-6">
-        <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-6">
-          <X className="text-red-400" size={48} />
-        </div>
-        <h1 className="text-4xl font-display font-black mb-4 uppercase text-center">Reservation Not Found</h1>
-        <p className="text-silver/80 text-center max-w-md mb-8">
-          We couldn't find a reservation with this ID. It may have been cancelled or the link is incorrect.
-        </p>
-        <Link to="/" className="btn-premium">
-          RETURN HOME
-        </Link>
-      </div>
-    );
+    return <NotFound />;
   }
 
   return (
@@ -246,9 +234,9 @@ export default function Dashboard() {
         <div className={`absolute inset-0 ${isDarkMode ? 'bg-black/80' : 'bg-black/20'} z-10`}></div>
         <div className={`absolute inset-0 bg-gradient-to-b from-navy ${isDarkMode ? 'via-navy/60' : 'via-navy/10'} to-navy z-10`}></div>
         <img 
-          src="/assets/pool-water-bg.jpg" 
+          src="/assets/pool-water-bg.png" 
           alt="Pool water background"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover blur-sm"
           referrerPolicy="no-referrer"
           loading="lazy"
         />
@@ -295,7 +283,7 @@ export default function Dashboard() {
               Thanks for reserving, <span className="text-transparent bg-clip-text bg-gradient-to-r from-electric to-blue-400">{bookingData?.fullName?.split(' ')[0] || 'Alex'}</span>
             </h1>
             
-            <div className="mt-8 bg-white/5 border border-white/10 rounded-2xl p-8 max-w-md mx-auto backdrop-blur-md">
+            <div className="mt-8 dashboard-card rounded-2xl p-8 max-w-md mx-auto backdrop-blur-md">
               <p className="text-silver/90 text-lg font-light uppercase tracking-widest mb-2">Your flight status</p>
               <div className="text-5xl md:text-7xl font-mono font-bold text-white tracking-tight">
                 {timeLeft}
@@ -309,7 +297,7 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col justify-between"
+              className="dashboard-card rounded-2xl p-6 flex flex-col justify-between"
             >
               <div className="flex items-center gap-3 mb-4 text-silver">
                 <Wind className="text-electric" size={24} />
@@ -330,7 +318,7 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col justify-between"
+              className="dashboard-card rounded-2xl p-6 flex flex-col justify-between"
             >
               <div className="flex items-center gap-3 mb-4 text-silver">
                 <Thermometer className="text-electric" size={24} />
@@ -351,7 +339,7 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25 }}
-              className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col justify-between"
+              className="dashboard-card rounded-2xl p-6 flex flex-col justify-between"
             >
               <div className="flex items-center gap-3 mb-4 text-silver">
                 <Waves className="text-electric" size={24} />
@@ -399,7 +387,7 @@ export default function Dashboard() {
             <h2 className="text-2xl font-display font-black mb-6 uppercase tracking-wider flex items-center gap-3">
               <span className="w-8 h-px bg-electric"></span> Booking Details
             </h2>
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8">
+            <div className="dashboard-card rounded-2xl p-6 md:p-8">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
                   <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">Full Name</p>
@@ -436,7 +424,7 @@ export default function Dashboard() {
             <span className="w-8 h-px bg-electric"></span> Gear & Profile
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col justify-between">
+            <div className="dashboard-card rounded-2xl p-6 flex flex-col justify-between">
               <div>
                 <Shirt className="text-silver mb-4" size={28} />
                 <h3 className="font-display font-bold text-white mb-1 uppercase tracking-wider">Wetsuit Match</h3>
@@ -460,7 +448,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col justify-between">
+            <div className="dashboard-card rounded-2xl p-6 flex flex-col justify-between">
               <div>
                 <HeartPulse className="text-silver mb-4" size={28} />
                 <h3 className="font-display font-bold text-white mb-1 uppercase tracking-wider">Physical Condition</h3>
@@ -478,7 +466,7 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col justify-between">
+            <div className="dashboard-card rounded-2xl p-6 flex flex-col justify-between">
               <div>
                 <FileSignature className="text-silver mb-4" size={28} />
                 <h3 className="font-display font-bold text-white mb-1 uppercase tracking-wider">Waiver Status</h3>
@@ -496,7 +484,7 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col justify-between">
+            <div className="dashboard-card rounded-2xl p-6 flex flex-col justify-between">
               <div>
                 <Compass className="text-silver mb-4" size={28} />
                 <h3 className="font-display font-bold text-white mb-1 uppercase tracking-wider">Experience Level</h3>
@@ -529,6 +517,7 @@ export default function Dashboard() {
                 title="Safety Briefing Checklist"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                 allowFullScreen
+                loading="lazy"
               ></iframe>
             </div>
             <div className="flex flex-col justify-center">
@@ -581,7 +570,7 @@ export default function Dashboard() {
           <h2 className="text-2xl font-display font-black mb-6 uppercase tracking-wider flex items-center gap-3">
             <span className="w-8 h-px bg-electric"></span> After-Flight Gallery
           </h2>
-          <div className="bg-gradient-to-r from-white/5 to-transparent border border-white/10 rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="dashboard-card rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-6">
               <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center shrink-0">
                 <DownloadCloud className="text-white" size={32} />
@@ -628,7 +617,7 @@ export default function Dashboard() {
               <div className="flex gap-3">
                 <button 
                   onClick={() => setShowHealthPopup(false)}
-                  className="flex-1 py-3 bg-white/5 border border-white/10 text-white font-bold rounded-xl text-sm hover:bg-white/10 transition-colors"
+                  className="flex-1 py-3 dashboard-card text-white font-bold rounded-xl text-sm hover:bg-white/10 transition-colors"
                 >
                   Cancel
                 </button>
@@ -660,7 +649,7 @@ export default function Dashboard() {
               <h3 className="text-2xl font-display font-black mb-4 flex items-center gap-2 uppercase">
                 <FileSignature className="text-electric" /> Liability Waiver
               </h3>
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4 h-64 overflow-y-auto text-silver/80 text-sm mb-6 space-y-4">
+              <div className="dashboard-card rounded-xl p-4 h-64 overflow-y-auto text-silver/80 text-sm mb-6 space-y-4">
                 <p className="font-bold text-white">RELEASE OF LIABILITY, WAIVER OF CLAIMS, EXPRESS ASSUMPTION OF RISK AND INDEMNITY AGREEMENT</p>
                 <p>Please read and be certain you understand the implications of signing.</p>
                 <p>1. I understand that eFoiling involves inherent risks, including but not limited to: falling into water, impact with the board or foil, marine life encounters, and varying weather/water conditions.</p>
@@ -672,7 +661,7 @@ export default function Dashboard() {
               <div className="flex gap-3">
                 <button 
                   onClick={() => setShowWaiverPopup(false)}
-                  className="flex-1 py-3 bg-white/5 border border-white/10 text-white font-bold rounded-xl text-sm hover:bg-white/10 transition-colors"
+                  className="flex-1 py-3 dashboard-card text-white font-bold rounded-xl text-sm hover:bg-white/10 transition-colors"
                 >
                   Cancel
                 </button>
@@ -720,7 +709,7 @@ export default function Dashboard() {
                       className={`w-full p-4 rounded-xl border text-left transition-colors flex items-center justify-between ${
                         experienceLevel === option.id 
                           ? 'bg-electric/20 border-electric text-white' 
-                          : 'bg-white/5 border-white/10 text-silver hover:bg-white/10 hover:text-white'
+                          : 'dashboard-card text-silver hover:bg-white/10 hover:text-white'
                       }`}
                     >
                       <span className="font-medium">{option.label}</span>
@@ -732,7 +721,7 @@ export default function Dashboard() {
               <div className="flex gap-3">
                 <button 
                   onClick={() => setShowExperiencePopup(false)}
-                  className="flex-1 py-3 bg-white/5 border border-white/10 text-white font-bold rounded-xl text-sm hover:bg-white/10 transition-colors"
+                  className="flex-1 py-3 dashboard-card text-white font-bold rounded-xl text-sm hover:bg-white/10 transition-colors"
                 >
                   Cancel
                 </button>

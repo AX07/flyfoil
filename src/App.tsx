@@ -3,6 +3,7 @@ import { useState, useEffect, Suspense, lazy } from 'react';
 import { AnimatePresence } from 'motion/react';
 import Landing from './Landing';
 import LoadingScreen from './LoadingScreen';
+import NotFound from './NotFound';
 
 // Lazy load secondary routes for better initial load performance
 const Dashboard = lazy(() => import('./Dashboard'));
@@ -20,13 +21,10 @@ function AppContent() {
     let isMounted = true;
     
     const checkMediaLoaded = () => {
-      const videos = Array.from(document.querySelectorAll('video'));
-      const iframes = Array.from(document.querySelectorAll('iframe'));
+      // Only wait for the hero video (the first one) to speed up loading
+      const heroVideo = document.querySelector('video');
       
-      let loadedCount = 0;
-      const totalMedia = videos.length + iframes.length;
-      
-      if (totalMedia === 0) {
+      if (!heroVideo) {
         if (isMounted) {
           setIsLoading(false);
           document.body.style.overflow = 'unset';
@@ -35,40 +33,30 @@ function AppContent() {
       }
       
       const handleMediaLoad = () => {
-        loadedCount++;
-        if (loadedCount >= totalMedia && isMounted) {
+        if (isMounted) {
           setIsLoading(false);
           document.body.style.overflow = 'unset';
         }
       };
       
-      videos.forEach(video => {
-        if (video.readyState >= 3) {
-          handleMediaLoad();
-        } else {
-          video.addEventListener('loadeddata', handleMediaLoad);
-          video.addEventListener('error', handleMediaLoad);
-        }
-      });
-      
-      iframes.forEach(iframe => {
-        // Iframes might already be loaded, but it's hard to check cross-origin readyState reliably.
-        // We'll attach the event listener and rely on the fallback timer if it misses.
-        iframe.addEventListener('load', handleMediaLoad);
-        iframe.addEventListener('error', handleMediaLoad);
-      });
+      if (heroVideo.readyState >= 3) {
+        handleMediaLoad();
+      } else {
+        heroVideo.addEventListener('loadeddata', handleMediaLoad);
+        heroVideo.addEventListener('error', handleMediaLoad);
+      }
     };
     
     // Wait a tick for the DOM to update with new elements
     const timer = setTimeout(checkMediaLoaded, 100);
     
-    // Fallback timeout in case media takes too long or events are missed
+    // Fast fallback timeout (2 seconds max)
     const fallbackTimer = setTimeout(() => {
       if (isMounted) {
         setIsLoading(false);
         document.body.style.overflow = 'unset';
       }
-    }, 5000);
+    }, 2000);
     
     return () => {
       isMounted = false;
@@ -90,6 +78,7 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard/:id" element={<Dashboard />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </>

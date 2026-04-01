@@ -68,7 +68,7 @@ service cloud.firestore {
         !exists(/databases/$(database)/documents/schedule/$(slotId)) &&
         request.resource.data.status == 'booked' &&
         hasRequiredFields(['status', 'date', 'sessionTime', 'reservationId', 'createdAt']) &&
-        getAfter(/databases/$(database)/documents/reservations/$(request.resource.data.reservationId)) != null
+        existsAfter(/databases/$(database)/documents/reservations/$(request.resource.data.reservationId))
       );
       
       allow update, delete: if isAdmin();

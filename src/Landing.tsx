@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, useScroll, useTransform } from 'motion/react';
+import { motion, useScroll, useTransform, AnimatePresence } from 'motion/react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import { useNavigate, Link } from 'react-router-dom';
 import L from 'leaflet';
@@ -9,7 +9,7 @@ import {
   MapPin, Calendar, CreditCard, Bitcoin, Check, 
   MessageCircle, ChevronRight, ChevronLeft, Star, Play, Waves, Compass,
   Gift, UserCheck, LifeBuoy, Sun, Moon, User, Mail, Phone, Clock, Info,
-  Instagram, Youtube
+  Instagram, Youtube, FileSignature
 } from 'lucide-react';
 import { collection, addDoc, doc, getDoc, writeBatch } from 'firebase/firestore';
 import { db } from './firebase';
@@ -37,11 +37,11 @@ function MapUpdater({ center }: { center: [number, number] }) {
 export default function Landing() {
   const navigate = useNavigate();
   const locations = [
-    { id: "beliche", name: "Beliche Lake", desc: "Freshwater perfection / Smooth, glassy conditions surrounded by nature.", highlight: false, videoId: "0jDCjP4FvCA", coords: [[37.275, -7.535] as [number, number]] },
+    { id: "beliche", name: "Beliche Lake", desc: "Freshwater perfection / Smooth, glassy conditions surrounded by nature. Perfect for beginners.", highlight: true, videoId: "0jDCjP4FvCA", coords: [[37.275, -7.535] as [number, number]] },
     { id: "fuseta", name: "Fuseta", desc: "Golden sands & open horizon for long glides.", highlight: false, videoId: "iX9567Pd0Us", coords: [[37.050, -7.745] as [number, number]] },
-    { id: "cabanas", name: "Cabanas de Tavira", desc: "Home Base / Crystal Calm waters perfect for beginners.", highlight: false, videoId: "_f3zSvTuUl4", coords: [[37.133, -7.590] as [number, number]] },
+    { id: "cabanas", name: "Cabanas de Tavira", desc: "Home Base / Crystal Calm waters.", highlight: false, videoId: "_f3zSvTuUl4", coords: [[37.133, -7.590] as [number, number]] },
     { id: "altura", name: "Altura", desc: "Wide open bays perfect for cruising and carving.", highlight: false, videoId: "iX9567Pd0Us", coords: [[37.173, -7.495] as [number, number]] },
-    { id: "cross-border", name: "The Cross-Border Special", desc: "Vila Real to Isla Cristina (Spain). A unique international flight.", highlight: true, videoId: "jJYbSImw_HE", coords: [[37.195, -7.415] as [number, number], [37.200, -7.320] as [number, number]] }
+    { id: "cross-border", name: "The Cross-Border Special", desc: "Vila Real to Isla Cristina (Spain). A unique international flight.", highlight: false, videoId: "jJYbSImw_HE", coords: [[37.195, -7.415] as [number, number], [37.200, -7.320] as [number, number]] }
   ];
 
   const videos = ["mN7_Nz5d0oM", "AxWRIK85GgM", "b4yCyD4L2kE"];
@@ -62,6 +62,7 @@ export default function Landing() {
   const [availableSlots, setAvailableSlots] = useState({ morning: true, evening: true });
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [selectedSessionTime, setSelectedSessionTime] = useState('');
+  const [showWaiverPopup, setShowWaiverPopup] = useState(false);
 
   useEffect(() => {
     if (!selectedDate) {
@@ -291,9 +292,9 @@ export default function Landing() {
           <div className={`absolute inset-0 ${isDarkMode ? 'bg-black/60' : 'bg-black/20'} z-10`}></div>
           <div className={`absolute inset-0 bg-gradient-to-b from-navy ${isDarkMode ? 'via-navy/40' : 'via-navy/10'} to-navy z-10`}></div>
           <img 
-            src="/assets/pool-water-bg.jpg" 
+            src="/assets/pool-water-bg.png" 
             alt="Pool water background"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover blur-sm"
             referrerPolicy="no-referrer"
             loading="lazy"
           />
@@ -419,7 +420,7 @@ export default function Landing() {
             {[
               { id: "starter-flight", icon: <GraduationCap size={40} strokeWidth={1} />, title: "Starter Flight", desc: "Learn the basics: how to handle the e-foil, balance, and get on the board safely. Perfect for absolute beginners.", duration: "20 min", price: "€60", videoId: "5rR4XPne7MU" },
               { id: "half-experience", icon: <Waves size={40} strokeWidth={1} />, title: "Half Experience", desc: "Get a true taste of the flight. Once you're comfortable on the board, experience the thrill of gliding above the water.", duration: "30 min", price: "€80", videoId: "cuvJeTT4ksI" },
-              { id: "full-experience", icon: <Compass size={40} strokeWidth={1} />, title: "Full Experience", desc: "The ultimate adventure. Embark on a scenic route, master your turns, and enjoy the e-foiling experience to the absolute max.", duration: "1h", price: "€150", videoId: "dTxpgd_Gu6w" }
+              { id: "full-experience", icon: <Compass size={40} strokeWidth={1} />, title: "Full Experience", desc: "The ultimate adventure. Embark on a scenic route, master your turns, and enjoy the e-foiling experience to the absolute max.", duration: "1h", price: "€150", videoId: "dTxpgd_Gu6w", comingSoon: true }
             ].map((feature, i) => (
               <motion.div 
                 key={i}
@@ -428,7 +429,7 @@ export default function Landing() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ delay: 0.2 }}
-                className="flex flex-col gap-8 group scroll-mt-24 bg-navy-light border border-white/5 p-6 md:p-10 rounded-2xl shadow-2xl relative overflow-hidden"
+                className={`flex flex-col gap-8 group scroll-mt-24 bg-navy-light border border-white/5 p-6 md:p-10 rounded-2xl shadow-2xl relative overflow-hidden ${feature.comingSoon ? 'opacity-50 grayscale' : ''}`}
               >
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
                 <div className="w-full h-[300px] md:h-[400px] rounded-2xl overflow-hidden relative">
@@ -440,6 +441,7 @@ export default function Landing() {
                     frameBorder="0" 
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                     allowFullScreen
+                    loading="lazy"
                     className="w-full h-full object-cover pointer-events-none scale-150"
                   ></iframe>
                   <div className="absolute inset-0 bg-navy/20 group-hover:bg-transparent transition-colors duration-700 pointer-events-none"></div>
@@ -459,12 +461,18 @@ export default function Landing() {
                       <span className="text-xs tracking-[0.2em] uppercase border border-white/20 px-4 py-2 rounded-full text-silver">{feature.duration}</span>
                       <span className="text-xs tracking-[0.2em] uppercase border border-[#D4AF37]/30 text-[#D4AF37] px-4 py-2 rounded-full">{feature.price}</span>
                     </div>
-                    <button onClick={() => {
-                      setSelectedExperience(`${feature.title} (${feature.duration}) - ${feature.price}`);
-                      scrollTo('locations');
-                    }} className="px-8 py-4 bg-navy border border-white/10 text-white text-sm font-bold tracking-widest uppercase rounded-xl hover:bg-white hover:text-navy transition-all duration-300 text-center">
-                      Book this flight
-                    </button>
+                    {feature.comingSoon ? (
+                      <button disabled className="px-8 py-4 bg-white/5 border border-white/10 text-white/50 text-sm font-bold tracking-widest uppercase rounded-xl cursor-not-allowed text-center">
+                        Coming Soon
+                      </button>
+                    ) : (
+                      <button onClick={() => {
+                        setSelectedExperience(`${feature.title} (${feature.duration}) - ${feature.price}`);
+                        scrollTo('locations');
+                      }} className="px-8 py-4 bg-navy border border-white/10 text-white text-sm font-bold tracking-widest uppercase rounded-xl hover:bg-white hover:text-navy transition-all duration-300 text-center">
+                        Book this flight
+                      </button>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -507,7 +515,7 @@ export default function Landing() {
                       <MapPin size={18} className={activeLocation.id === loc.id ? 'text-navy' : 'text-white'} />
                       {loc.name}
                     </h3>
-                    {loc.highlight && <span className={`text-[10px] uppercase tracking-wider px-2 py-1 rounded-full border ${activeLocation.id === loc.id ? 'bg-navy/10 text-navy border-navy/20' : 'bg-white/10 text-white border-white/30'}`}>Unique</span>}
+                    {loc.highlight && <span className={`text-[10px] uppercase tracking-wider px-2 py-1 rounded-full border ${activeLocation.id === loc.id ? 'bg-navy/10 text-navy border-navy/20' : 'bg-white/10 text-white border-white/30'}`}>Beginner</span>}
                   </div>
                   <p className={`text-sm ${activeLocation.id === loc.id ? 'text-navy/80' : 'text-silver/70'}`}>{loc.desc}</p>
                 </motion.div>
@@ -563,6 +571,7 @@ export default function Landing() {
                       frameBorder="0" 
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                       allowFullScreen
+                      loading="lazy"
                       className="w-full h-full object-cover pointer-events-none scale-150"
                     ></iframe>
                   </div>
@@ -629,6 +638,7 @@ export default function Landing() {
                     frameBorder="0" 
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                     allowFullScreen
+                    loading="lazy"
                     className="w-full h-full object-cover pointer-events-none scale-105"
                   ></iframe>
                 ) : (
@@ -759,6 +769,12 @@ export default function Landing() {
               const date = formData.get('date') as string;
               const sessionTime = formData.get('sessionTime') as string;
               
+              const agreeToTerms = formData.get('agreeToTerms');
+              if (!agreeToTerms) {
+                alert("Please agree to the Digital Waiver & Liability Form to continue.");
+                return;
+              }
+
               if (!date || !sessionTime) {
                 alert("Please select a date and session time.");
                 return;
@@ -804,12 +820,34 @@ export default function Landing() {
 
                 await batch.commit();
                 
+                const profileLink = `${window.location.origin}/dashboard/${reservationRef.id}`;
+                const email = bookingData.email;
+                const phone = bookingData.phone;
+                const fullName = bookingData.fullName;
+                
+                // Call backend API to send email
+                try {
+                  await fetch('/api/send-booking-confirmation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      email,
+                      phone,
+                      reservationId: reservationRef.id,
+                      fullName
+                    })
+                  });
+                } catch (apiError) {
+                  console.error("Failed to trigger confirmation messages:", apiError);
+                  // We don't block the user if messages fail, they still booked successfully
+                }
+                
                 localStorage.setItem('auth_reservation', reservationRef.id);
                 window.scrollTo(0, 0);
                 navigate(`/dashboard/${reservationRef.id}`);
               } catch (error) {
                 console.error("Error adding reservation: ", error);
-                alert("There was an error processing your reservation. Please try again.");
+                alert("There was an error processing your reservation: " + (error instanceof Error ? error.message : String(error)));
               }
             }}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -902,7 +940,7 @@ export default function Landing() {
                   >
                     <option className="bg-navy text-white">Starter Flight (20 min) - €60</option>
                     <option className="bg-navy text-white">Half Experience (30 min) - €80</option>
-                    <option className="bg-navy text-white">Full Experience (1h) - €150</option>
+                    <option className="bg-navy text-white" disabled>Full Experience (1h) - €150 (Coming Soon)</option>
                   </select>
                 </div>
               </div>
@@ -920,13 +958,13 @@ export default function Landing() {
               <div className="pt-4 pb-2">
                 <label className="flex items-start gap-3 cursor-pointer group">
                   <div className="relative flex-shrink-0 mt-1">
-                    <input type="checkbox" className="peer sr-only" required />
+                    <input type="checkbox" name="agreeToTerms" className="peer sr-only" />
                     <div className="w-5 h-5 rounded border border-white/20 bg-white/5 peer-checked:bg-electric peer-checked:border-electric transition-colors flex items-center justify-center">
                       <Check size={14} className="text-navy opacity-0 peer-checked:opacity-100" />
                     </div>
                   </div>
                   <span className="text-sm text-silver/80 leading-relaxed">
-                    I agree to the <a href="#" className="text-electric hover:underline">Digital Waiver & Liability Form</a> and confirm I am able to swim.
+                    I agree to the <button type="button" onClick={(e) => { e.preventDefault(); setShowWaiverPopup(true); }} className="text-electric hover:underline">Digital Waiver & Liability Form</button> and confirm I am able to swim.
                   </span>
                 </label>
               </div>
@@ -958,6 +996,11 @@ export default function Landing() {
               <div className="flex gap-4">
                 <a href="https://www.instagram.com/flyfoilformosa/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-navy-light flex items-center justify-center hover:bg-electric hover:text-navy cursor-pointer transition-colors border border-white/10">
                   <Instagram size={20} />
+                </a>
+                <a href="https://www.tiktok.com/@flyfoilformosa" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-navy-light flex items-center justify-center hover:bg-electric hover:text-navy cursor-pointer transition-colors border border-white/10">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path>
+                  </svg>
                 </a>
                 <a href="https://www.youtube.com/@FlyFoilFormosa" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-navy-light flex items-center justify-center hover:bg-electric hover:text-navy cursor-pointer transition-colors border border-white/10">
                   <Youtube size={20} />
@@ -1031,6 +1074,43 @@ export default function Landing() {
           <span className="text-[10px] font-bold tracking-widest uppercase">Profile</span>
         </button>
       </div>
+
+      <AnimatePresence>
+        {showWaiverPopup && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-navy border border-white/10 rounded-2xl p-6 max-w-lg w-full relative shadow-2xl"
+            >
+              <button onClick={() => setShowWaiverPopup(false)} className="absolute top-4 right-4 text-silver hover:text-white">
+                <X size={20} />
+              </button>
+              <h3 className="text-2xl font-display font-black mb-4 flex items-center gap-2 uppercase">
+                <FileSignature className="text-electric" /> Liability Waiver
+              </h3>
+              <div className="dashboard-card rounded-xl p-4 h-64 overflow-y-auto text-silver/80 text-sm mb-6 space-y-4">
+                <p className="font-bold text-white">RELEASE OF LIABILITY, WAIVER OF CLAIMS, EXPRESS ASSUMPTION OF RISK AND INDEMNITY AGREEMENT</p>
+                <p>Please read and be certain you understand the implications of signing.</p>
+                <p>1. I understand that eFoiling involves inherent risks, including but not limited to: falling into water, impact with the board or foil, marine life encounters, and varying weather/water conditions.</p>
+                <p>2. I agree to wear the provided personal flotation device (PFD) and helmet at all times while on the water.</p>
+                <p>3. I agree to follow all instructions provided by the instructor and acknowledge that failure to do so may result in the immediate termination of my session without refund.</p>
+                <p>4. I hereby release, waive, and discharge FlyFoil, its instructors, and affiliates from any and all liability, claims, demands, or causes of action arising out of any damage, loss, or injury to me or my property.</p>
+                <p>By clicking "Close", I acknowledge that I have read this document in its entirety and fully understand its terms.</p>
+              </div>
+              <div className="flex justify-end">
+                <button 
+                  onClick={() => setShowWaiverPopup(false)}
+                  className="px-8 py-3 bg-electric text-navy font-bold rounded-xl text-sm hover:bg-electric/90 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
