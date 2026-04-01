@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Phone, ArrowRight, CheckCircle, Sun, Moon, AlertCircle } from 'lucide-react';
+import { Mail, Phone, ArrowRight, Sun, Moon, AlertCircle } from 'lucide-react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 
 export default function Login() {
   const [method, setMethod] = useState<'email' | 'phone'>('email');
   const [inputValue, setInputValue] = useState('');
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
@@ -48,27 +47,13 @@ export default function Login() {
       // Use the first matching reservation
       const reservationId = querySnapshot.docs[0].id;
       
-      setIsSubmitted(true);
-      
-      // Simulate sending magic link by showing it on screen (since we can't actually send emails/SMS here)
-      setMagicLink(`/dashboard/${reservationId}?token=magic_${reservationId}`);
+      // Log the user in directly
+      localStorage.setItem('auth_reservation', reservationId);
+      navigate(`/dashboard/${reservationId}`);
       
     } catch (err) {
       console.error("Error querying reservations:", err);
       setError("An error occurred while looking up your reservation.");
-    }
-  };
-
-  const [magicLink, setMagicLink] = useState<string | null>(null);
-
-  const handleMagicLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    if (magicLink) {
-      const resId = magicLink.split('?')[0].split('/').pop();
-      if (resId) {
-        localStorage.setItem('auth_reservation', resId);
-        navigate(magicLink);
-      }
     }
   };
 
@@ -105,41 +90,12 @@ export default function Login() {
           animate={{ opacity: 1, y: 0 }}
           className="relative z-10 w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 md:p-10 shadow-2xl"
         >
-          {isSubmitted ? (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="text-center py-8"
-            >
-              <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-emerald-500/30">
-                <CheckCircle className="text-emerald-400" size={40} />
-              </div>
-              <h2 className="text-2xl font-display font-black mb-3 uppercase">Magic Link Sent!</h2>
-              <p className="text-silver/80 mb-6">
-                Check your {method === 'email' ? 'inbox' : 'messages'} for the secure link to access your Flight Deck.
-              </p>
-              
-              {magicLink && (
-                <div className="mt-8 p-6 bg-navy-light/50 border border-electric/30 rounded-xl">
-                  <p className="text-xs text-silver mb-3 uppercase tracking-widest">Simulated Inbox / SMS</p>
-                  <a 
-                    href={magicLink}
-                    onClick={handleMagicLinkClick}
-                    className="block w-full py-3 bg-electric text-navy font-bold rounded-lg hover:bg-electric/90 transition-colors"
-                  >
-                    Click here to Login
-                  </a>
-                </div>
-              )}
-            </motion.div>
-          ) : (
-            <>
-              <div className="text-center mb-10">
-                <h1 className="text-3xl font-display font-black mb-3 tracking-tight uppercase">Access Flight Deck</h1>
-                <p className="text-silver/80 text-sm">Enter your booking email or phone number to receive a secure, passwordless magic link.</p>
-              </div>
+          <div className="text-center mb-10">
+            <h1 className="text-3xl font-display font-black mb-3 tracking-tight uppercase">Access Flight Deck</h1>
+            <p className="text-silver/80 text-sm">Enter your booking email or phone number to access your Flight Deck.</p>
+          </div>
 
-              <div className="flex p-1 bg-white/5 rounded-xl mb-8 border border-white/10">
+          <div className="flex p-1 bg-white/5 rounded-xl mb-8 border border-white/10">
                 <button 
                   onClick={() => { setMethod('email'); setInputValue(''); }}
                   className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${method === 'email' ? 'bg-white text-navy shadow-sm' : 'text-silver hover:text-white'}`}
@@ -188,7 +144,7 @@ export default function Login() {
                     type="submit" 
                     className="btn-premium w-full text-sm flex items-center justify-center gap-2"
                   >
-                    SEND MAGIC LINK <ArrowRight size={18} />
+                    LOG IN <ArrowRight size={18} />
                   </button>
                   
                   <a 
@@ -199,8 +155,6 @@ export default function Login() {
                   </a>
                 </div>
               </form>
-            </>
-          )}
         </motion.div>
       </main>
     </div>
