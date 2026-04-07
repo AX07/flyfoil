@@ -57,6 +57,7 @@ export default function Landing() {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
   const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   
   const [selectedDate, setSelectedDate] = useState('');
   const [availableSlots, setAvailableSlots] = useState({ morning: true, evening: true });
@@ -98,6 +99,29 @@ export default function Landing() {
     { name: "Elena Rodriguez", role: "Holiday Maker", text: "Booked this as a surprise for my husband's birthday. We both loved it! The cross-border special to Spain was the highlight of our trip. Unforgettable.", rating: 5 }
   ];
 
+  const faqs = [
+    {
+      question: "Is it difficult?",
+      answer: "Think of it like riding a bike—it takes a little balance at first, but once you get it, it's magical. 'Taxiing' on your knees is fun and achievable in 10-20 mins. And remember, falling into the water is part of the adventure!"
+    },
+    {
+      question: "Do I need to be an athlete?",
+      answer: "Not at all! If you can stand up from a kneeling position, you can eFoil. Our boards are designed for stability and our instructors guide you at your own pace."
+    },
+    {
+      question: "What should I bring?",
+      answer: "Just bring swimwear, a towel, and sunscreen. We provide the eFoil, helmet, life jacket, and wetsuit (if needed)."
+    },
+    {
+      question: "Is it safe for the Ria Formosa environment?",
+      answer: "Absolutely. Our eFoils use 100% electric, silent motors. There are no emissions, no wake to disturb the shoreline, and no noise pollution, making it perfectly safe for the local marine life."
+    },
+    {
+      question: "What is the minimum age?",
+      answer: "Riders must be at least 12 years old. Anyone under 18 needs a parent or guardian present to sign the digital waiver."
+    }
+  ];
+
   const { scrollY } = useScroll();
   const heroY = useTransform(scrollY, [0, 1000], [0, 200]);
   const heroOpacity = useTransform(scrollY, [0, 500], [1, 0]);
@@ -126,6 +150,13 @@ export default function Landing() {
     }, 15000);
     return () => clearInterval(timer);
   }, [videos.length]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentReviewIndex((prev) => (prev + 1) % reviews.length);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [reviews.length]);
 
   const scrollTo = (id: string) => {
     setIsMobileMenuOpen(false);
@@ -595,11 +626,20 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Social Proof */}
+      {/* Social Media */}
       <section className="py-24 bg-navy overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 mb-12 text-center">
-          <h2 className="text-3xl md:text-5xl font-display font-black mb-4 uppercase leading-none">Rider Stories</h2>
-          <p className="text-silver">See what it's like to fly with us.</p>
+          <h2 className="text-3xl md:text-5xl font-display font-black mb-4 uppercase leading-none">Social Media</h2>
+          <p className="text-silver mb-6">See what it's like to fly with us.</p>
+          <div className="flex items-center justify-center gap-4">
+            <span className="text-white font-bold tracking-widest uppercase text-sm">Follow Us</span>
+            <a href="#" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-electric hover:text-navy hover:border-electric transition-all">
+              <Instagram size={20} />
+            </a>
+            <a href="#" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-electric hover:text-navy hover:border-electric transition-all">
+              <Youtube size={20} />
+            </a>
+          </div>
         </div>
 
         <div className="relative w-full max-w-6xl mx-auto h-[500px] md:h-[600px] flex items-center justify-center overflow-hidden">
@@ -730,6 +770,50 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* FAQ Section */}
+      <section className="py-24 bg-navy-light relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+        <div className="max-w-3xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-display font-black mb-4 uppercase leading-none">Got Questions?</h2>
+            <p className="text-silver">Everything you need to know before your flight.</p>
+          </div>
+
+          <div className="space-y-4">
+            {faqs.map((faq, index) => (
+              <div 
+                key={index} 
+                className="bg-navy border border-white/10 rounded-2xl overflow-hidden transition-all duration-300"
+              >
+                <button 
+                  onClick={() => setOpenFaqIndex(openFaqIndex === index ? null : index)}
+                  className="w-full px-6 py-5 flex items-center justify-between text-left focus:outline-none"
+                >
+                  <span className="font-bold text-white pr-8">{faq.question}</span>
+                  <div className={`w-8 h-8 rounded-full bg-white/5 flex items-center justify-center shrink-0 transition-transform duration-300 ${openFaqIndex === index ? 'rotate-180 bg-electric text-navy' : 'text-silver'}`}>
+                    <ChevronRight size={18} className={openFaqIndex === index ? 'rotate-90' : ''} />
+                  </div>
+                </button>
+                <AnimatePresence>
+                  {openFaqIndex === index && (
+                    <motion.div 
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <div className="px-6 pb-6 text-silver/80 text-sm leading-relaxed border-t border-white/5 pt-4">
+                        {faq.answer}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Booking Hub */}
       <section id="booking" className="relative py-24 flex items-center justify-center overflow-hidden min-h-[100svh]">
         <div className="absolute inset-0 z-0">
@@ -834,7 +918,11 @@ export default function Landing() {
                       email,
                       phone,
                       reservationId: reservationRef.id,
-                      fullName
+                      fullName,
+                      date: bookingData.date,
+                      sessionTime: bookingData.sessionTime,
+                      experience: bookingData.experience,
+                      location: bookingData.location
                     })
                   });
                 } catch (apiError) {

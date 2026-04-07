@@ -20,48 +20,17 @@ function AppContent() {
     
     let isMounted = true;
     
-    const checkMediaLoaded = () => {
-      // Only wait for the hero video (the first one) to speed up loading
-      const heroVideo = document.querySelector('video');
-      
-      if (!heroVideo) {
-        if (isMounted) {
-          setIsLoading(false);
-          document.body.style.overflow = 'unset';
-        }
-        return;
-      }
-      
-      const handleMediaLoad = () => {
-        if (isMounted) {
-          setIsLoading(false);
-          document.body.style.overflow = 'unset';
-        }
-      };
-      
-      if (heroVideo.readyState >= 3) {
-        handleMediaLoad();
-      } else {
-        heroVideo.addEventListener('loadeddata', handleMediaLoad);
-        heroVideo.addEventListener('error', handleMediaLoad);
-      }
-    };
-    
-    // Wait a tick for the DOM to update with new elements
-    const timer = setTimeout(checkMediaLoaded, 100);
-    
-    // Fast fallback timeout (2 seconds max)
-    const fallbackTimer = setTimeout(() => {
+    // Always show loading screen for exactly 1 second
+    const timer = setTimeout(() => {
       if (isMounted) {
         setIsLoading(false);
         document.body.style.overflow = 'unset';
       }
-    }, 2000);
+    }, 1000);
     
     return () => {
       isMounted = false;
       clearTimeout(timer);
-      clearTimeout(fallbackTimer);
       document.body.style.overflow = 'unset';
     };
   }, [location.pathname]);
