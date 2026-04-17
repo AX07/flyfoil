@@ -1,137 +1,43 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Clock, Wind, Thermometer, MapPin, 
-  Shirt, HeartPulse, FileSignature, 
-  CheckCircle, Video, DownloadCloud, ChevronRight, Check,
-  Sun, Moon, Waves, X, Compass
+  MapPin, Shirt, HeartPulse, FileSignature, 
+  CheckCircle, ChevronRight, Check,
+  Sun, Moon, X, Compass, Info
 } from 'lucide-react';
-import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
-import { db } from './firebase';
-import NotFound from './NotFound';
+import { Link } from 'react-router-dom';
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
-export default function Dashboard() {
-  const { id } = useParams();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [bookingData, setBookingData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
+const createCustomIcon = (isActive: boolean) => L.divIcon({
+  className: 'custom-leaflet-icon',
+  html: `<div class="w-4 h-4 rounded-full -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ${isActive ? 'bg-electric scale-150 shadow-[0_0_15px_rgba(0,240,255,0.8)]' : 'bg-white/80 hover:bg-white'}">
+           ${isActive ? '<div class="absolute inset-0 rounded-full bg-electric animate-ping opacity-75"></div>' : ''}
+         </div>`,
+  iconSize: [16, 16],
+  iconAnchor: [8, 8]
+});
 
+function MapUpdater({ center }: { center: [number, number] }) {
+  const map = useMap();
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+    map.flyTo(center, 11, { duration: 1.5 });
+  }, [center, map]);
+  return null;
+}
 
-  useEffect(() => {
-    if (!id) return;
-    
-    // Check for magic link token in URL
-    const searchParams = new URLSearchParams(location.search);
-    const token = searchParams.get('token');
-    
-    if (token === `magic_${id}`) {
-      // Valid magic link, save to local storage
-      localStorage.setItem('auth_reservation', id);
-      // Clean up URL
-      navigate(`/dashboard/${id}`, { replace: true });
-      return;
-    }
-    
-    // Check local storage auth
-    const authId = localStorage.getItem('auth_reservation');
-    if (authId !== id) {
-      // Not authenticated for this dashboard
-      navigate('/login');
-      return;
-    }
-
-    setIsLoading(true);
-    const unsubscribe = onSnapshot(doc(db, 'reservations', id), (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setBookingData(data);
-        setWetsuitSize(data.wetsuitSize || 'None');
-        setHealthStatus(data.healthStatus || 'pending');
-        setWaiverStatus(data.waiverStatus || 'pending');
-        setExperienceLevel(data.experience || null);
-        setSafetyChecks({
-          signals: data.flightSchool || false,
-          falling: data.flightSchool || false,
-          equipment: data.flightSchool || false
-        });
-        setNotFound(false);
-      } else {
-        setNotFound(true);
-      }
-      setIsLoading(false);
-    }, (error) => {
-      console.error("Error fetching reservation:", error);
-      setNotFound(true);
-      setIsLoading(false);
-    });
-    return () => unsubscribe();
-  }, [id, location.search, navigate]);
-
-  const updateReservation = async (field: string, value: any) => {
-    if (!id) return;
-    try {
-      await updateDoc(doc(db, 'reservations', id), {
-        [field]: value
-      });
-    } catch (error) {
-      console.error("Error updating reservation:", error);
-    }
-  };
-
-  const [timeLeft, setTimeLeft] = useState("00:00:00");
+export default function Welcome() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
     return saved !== null ? saved === 'dark' : true;
   });
-  const [wetsuitSize, setWetsuitSize] = useState("None");
-  
-  const [isLoadingWeather, setIsLoadingWeather] = useState(true);
-  const [weatherData, setWeatherData] = useState({
-    windSpeed: '--',
-    waterTemp: '--',
-    tideStatus: '--',
-    tideTime: '--'
-  });
 
-  useEffect(() => {
-    if (!bookingData?.date || !bookingData?.location) return;
-    
-    async function fetchConditions() {
-      setIsLoadingWeather(true);
-      try {
-        const queryParams = new URLSearchParams({
-          date: bookingData.date,
-          location: bookingData.location
-        });
-        const response = await fetch(`/api/weather?${queryParams}`);
-        if (response.ok) {
-          const data = await response.json();
-          setWeatherData(data);
-        } else {
-          console.error("Failed to fetch weather data from backend");
-        }
-      } catch (error) {
-        console.error("Failed to fetch weather data:", error);
-      } finally {
-        setIsLoadingWeather(false);
-      }
-    }
-    
-    fetchConditions();
-  }, [bookingData?.date, bookingData?.location]);
-  
+  const [wetsuitSize, setWetsuitSize] = useState("None");
   const [healthStatus, setHealthStatus] = useState<'pending' | 'fit'>('pending');
   const [showHealthPopup, setShowHealthPopup] = useState(false);
-  
   const [waiverStatus, setWaiverStatus] = useState<'pending' | 'signed'>('pending');
   const [showWaiverPopup, setShowWaiverPopup] = useState(false);
-
   const [experienceLevel, setExperienceLevel] = useState<string | null>(null);
   const [showExperiencePopup, setShowExperiencePopup] = useState(false);
 
@@ -140,6 +46,20 @@ export default function Dashboard() {
     falling: false,
     equipment: false
   });
+
+  const locations = [
+    { id: "beliche", name: "Beliche Lake", desc: "Freshwater perfection / Smooth, glassy conditions surrounded by nature. Perfect for beginners.", highlight: true, videoId: "0jDCjP4FvCA", coords: [[37.275, -7.535] as [number, number]] },
+    { id: "fuseta", name: "Fuseta", desc: "Golden sands & open horizon for long glides.", highlight: false, videoId: "iX9567Pd0Us", coords: [[37.050, -7.745] as [number, number]] },
+    { id: "cabanas", name: "Cabanas de Tavira", desc: "Home Base / Crystal Calm waters.", highlight: false, videoId: "_f3zSvTuUl4", coords: [[37.133, -7.590] as [number, number]] },
+    { id: "altura", name: "Altura", desc: "Wide open bays perfect for cruising and carving.", highlight: false, videoId: "iX9567Pd0Us", coords: [[37.173, -7.495] as [number, number]] },
+    { id: "cross-border", name: "The Cross-Border Special", desc: "Vila Real to Isla Cristina (Spain). A unique international flight.", highlight: false, videoId: "jJYbSImw_HE", coords: [[37.195, -7.415] as [number, number], [37.200, -7.320] as [number, number]] }
+  ];
+
+  const [activeLocation, setActiveLocation] = useState(locations[2]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -151,73 +71,12 @@ export default function Dashboard() {
     }
   }, [isDarkMode]);
 
-  // Mock countdown effect
-  useEffect(() => {
-    if (!bookingData || !bookingData.date || !bookingData.sessionTime) {
-      // Fallback if no booking data
-      setTimeLeft("02:14:00");
-      return;
-    }
-
-    const calculateTimeLeft = () => {
-      // sessionTime is either "morning" or "evening"
-      const sessionHour = bookingData.sessionTime === 'morning' ? 10 : 15;
-      
-      // bookingData.date is like "2026-03-24"
-      const sessionDate = new Date(`${bookingData.date}T${sessionHour.toString().padStart(2, '0')}:00:00`);
-      
-      const now = new Date();
-      const difference = sessionDate.getTime() - now.getTime();
-      
-      if (difference <= 0) {
-        return "00:00:00";
-      }
-      
-      const totalSeconds = Math.floor(difference / 1000);
-      const h = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
-      const m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
-      const s = (totalSeconds % 60).toString().padStart(2, '0');
-      
-      return `${h}:${m}:${s}`;
-    };
-
-    setTimeLeft(calculateTimeLeft());
-
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
-    
-    return () => clearInterval(timer);
-  }, [bookingData]);
-
-  const toggleCheck = async (key: keyof typeof safetyChecks) => {
-    const newChecks = { ...safetyChecks, [key]: !safetyChecks[key] };
-    setSafetyChecks(newChecks);
-    if (newChecks.signals && newChecks.falling && newChecks.equipment) {
-      await updateReservation('flightSchool', true);
-    } else {
-      await updateReservation('flightSchool', false);
-    }
+  const toggleCheck = (key: keyof typeof safetyChecks) => {
+    setSafetyChecks({ ...safetyChecks, [key]: !safetyChecks[key] });
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-navy text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-electric/30 border-t-electric rounded-full animate-spin mx-auto mb-6"></div>
-          <h2 className="text-2xl font-display font-black uppercase tracking-wider">Loading Flight Deck...</h2>
-        </div>
-      </div>
-    );
-  }
-
-  if (notFound) {
-    return <NotFound />;
-  }
 
   return (
     <div className="min-h-screen bg-navy text-white selection:bg-electric selection:text-navy pb-24 transition-colors duration-300 relative">
-      {/* Background Image */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className={`absolute inset-0 ${isDarkMode ? 'bg-black/80' : 'bg-black/20'} z-10`}></div>
         <div className={`absolute inset-0 bg-gradient-to-b from-navy ${isDarkMode ? 'via-navy/60' : 'via-navy/10'} to-navy z-10`}></div>
@@ -230,7 +89,6 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Header */}
       <header className="py-6 px-6 border-b border-white/10 bg-navy/80 backdrop-blur-md sticky top-0 z-50 transition-colors duration-300 relative">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
           <Link to="/" className="flex items-center">
@@ -241,16 +99,7 @@ export default function Dashboard() {
             />
           </Link>
           <div className="flex items-center gap-6">
-            <div className="text-sm font-medium text-silver/80 hidden sm:block">Flight Deck</div>
-            <button 
-              onClick={() => {
-                localStorage.removeItem('auth_reservation');
-                navigate('/login');
-              }}
-              className="text-sm font-medium text-silver hover:text-white transition-colors border border-white/10 rounded-lg px-3 py-1.5 hover:bg-white/5"
-            >
-              Sign Out
-            </button>
+            <div className="text-sm font-medium text-silver/80 hidden sm:block">Welcome</div>
             <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 rounded-full hover:bg-white/10 transition-colors text-white" aria-label="Toggle theme">
               {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
@@ -260,7 +109,6 @@ export default function Dashboard() {
 
       <main className="max-w-4xl mx-auto px-6 pt-12 space-y-16 relative z-10">
         
-        {/* 1. Live Mission Status (Hero) */}
         <section>
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -268,111 +116,87 @@ export default function Dashboard() {
             className="text-center mb-10"
           >
             <h1 className="text-3xl md:text-5xl font-display font-black mb-4 tracking-tighter uppercase leading-none">
-              Thanks for reserving, <span className="text-transparent bg-clip-text bg-gradient-to-r from-electric to-blue-400">{bookingData?.fullName?.split(' ')[0] || 'Alex'}</span>
+              Welcome to <span className="text-transparent bg-clip-text bg-gradient-to-r from-electric to-blue-400">FlyFoil Formosa</span>
             </h1>
-            
-            <div className="mt-8 dashboard-card rounded-2xl p-8 max-w-md mx-auto backdrop-blur-md">
-              <p className="text-silver/90 text-lg font-light uppercase tracking-widest mb-2">Your flight status</p>
-              <div className="text-5xl md:text-7xl font-mono font-bold text-white tracking-tight">
-                {timeLeft}
-              </div>
-            </div>
+            <p className="text-silver/90 text-lg font-light">Prepare for your flight by completing the steps below.</p>
           </motion.div>
+        </section>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Weather Widget */}
+        <section>
+          <h2 className="text-2xl font-display font-black mb-6 uppercase tracking-wider flex items-center gap-3">
+            <span className="w-8 h-px bg-electric"></span> Locations
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              {locations.map((loc, i) => (
+                <motion.div 
+                  key={i}
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  onClick={() => setActiveLocation(loc)}
+                  className={`p-6 rounded-2xl cursor-pointer transition-all duration-300 border-2 ${activeLocation.id === loc.id ? 'bg-white text-navy border-white shadow-[0_0_30px_rgba(255,255,255,0.3)]' : 'bg-transparent border-white/20 text-white hover:border-white/50'}`}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-lg font-bold flex items-center gap-2">
+                      <MapPin size={18} className={activeLocation.id === loc.id ? 'text-navy' : 'text-white'} />
+                      {loc.name}
+                    </h3>
+                  </div>
+                  <p className={`text-sm ${activeLocation.id === loc.id ? 'text-navy/80' : 'text-silver/70'}`}>{loc.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+            
             <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="dashboard-card rounded-2xl p-6 flex flex-col justify-between"
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="flex flex-col lg:block h-[400px] lg:h-auto rounded-3xl overflow-hidden relative border border-white/10 bg-navy-light z-0"
             >
-              <div className="flex items-center gap-3 mb-4 text-silver">
-                <Wind className="text-electric" size={24} />
-                <span className="font-medium uppercase tracking-wider text-sm">Wind Speed</span>
+              <div className="relative h-full lg:absolute lg:inset-0">
+                <MapContainer 
+                  center={activeLocation.coords[0]} 
+                  zoom={11} 
+                  scrollWheelZoom={false}
+                  className="w-full h-full z-0"
+                  zoomControl={false}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
+                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                  />
+                  <MapUpdater center={activeLocation.coords[0]} />
+                  
+                  {locations.map((loc) => (
+                    loc.coords.map((coord, index) => (
+                      <Marker 
+                        key={`${loc.id}-${index}`} 
+                        position={coord}
+                        icon={createCustomIcon(activeLocation.id === loc.id)}
+                        eventHandlers={{
+                          click: () => setActiveLocation(loc),
+                        }}
+                      />
+                    ))
+                  ))}
+                </MapContainer>
               </div>
-              <div>
-                {isLoadingWeather ? (
-                  <div className="h-9 w-24 bg-white/10 animate-pulse rounded mb-1"></div>
-                ) : (
-                  <div className="text-3xl font-bold text-white">{weatherData.windSpeed} <span className="text-lg text-silver/60 font-normal">knots</span></div>
-                )}
-                <div className="text-sm text-emerald-400 mt-1">Optimal for eFoiling</div>
-              </div>
-            </motion.div>
-
-            {/* Water Temp Widget */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="dashboard-card rounded-2xl p-6 flex flex-col justify-between"
-            >
-              <div className="flex items-center gap-3 mb-4 text-silver">
-                <Thermometer className="text-electric" size={24} />
-                <span className="font-medium uppercase tracking-wider text-sm">Water Temp</span>
-              </div>
-              <div>
-                {isLoadingWeather ? (
-                  <div className="h-9 w-24 bg-white/10 animate-pulse rounded mb-1"></div>
-                ) : (
-                  <div className="text-3xl font-bold text-white">{weatherData.waterTemp}°<span className="text-lg text-silver/60 font-normal">C</span></div>
-                )}
-                <div className="text-sm text-silver/80 mt-1">Comfortable</div>
-              </div>
-            </motion.div>
-
-            {/* Tide Status Widget */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              className="dashboard-card rounded-2xl p-6 flex flex-col justify-between"
-            >
-              <div className="flex items-center gap-3 mb-4 text-silver">
-                <Waves className="text-electric" size={24} />
-                <span className="font-medium uppercase tracking-wider text-sm">Tide Status</span>
-              </div>
-              <div>
-                {isLoadingWeather ? (
-                  <div className="h-9 w-24 bg-white/10 animate-pulse rounded mb-1"></div>
-                ) : (
-                  <div className="text-3xl font-bold text-white">{weatherData.tideStatus}</div>
-                )}
-                {isLoadingWeather ? (
-                  <div className="h-5 w-32 bg-white/10 animate-pulse rounded mt-1"></div>
-                ) : (
-                  <div className="text-sm text-silver/80 mt-1">{weatherData.tideTime}</div>
-                )}
-              </div>
-            </motion.div>
-
-            {/* Launch Spot Pin */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-gradient-to-br from-navy-light to-navy border border-white/10 rounded-2xl p-6 flex flex-col justify-between relative overflow-hidden group"
-            >
-              <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=800&auto=format&fit=crop')] opacity-20 bg-cover bg-center group-hover:opacity-30 transition-opacity"></div>
-              <div className="relative z-10">
-                <div className="flex items-center gap-3 mb-4 text-white">
-                  <MapPin className="text-[#D4AF37]" size={24} />
-                  <span className="font-medium uppercase tracking-wider text-sm">Launch Spot</span>
-                </div>
-                <div className="text-lg font-bold text-white mb-4">{bookingData.location || 'Cabanas de Tavira'}</div>
+              
+              <div className="absolute bottom-6 left-6 right-6 z-30">
                 <a 
                   href={
-                    bookingData.location === 'Cabanas de Tavira' ? 'https://maps.app.goo.gl/TvbPDjfErXy9HZCs5' :
-                    bookingData.location === 'Fuseta' ? 'https://maps.app.goo.gl/tCEZ3PV1yBfs6pv16' :
-                    bookingData.location === 'Altura' ? 'https://maps.app.goo.gl/8k9dtbJvcXWXBqws5' :
-                    bookingData.location === 'Beliche (Sagres)' ? 'https://maps.app.goo.gl/i2eAvh75ym1L32iz5' :
-                    bookingData.location === 'Cross-border (Vila Real -> Isla Canela)' ? 'https://maps.app.goo.gl/MiZiByj5YjBxp16U8' :
-                    'https://maps.google.com/?q=' + encodeURIComponent(bookingData.location || 'Cabanas de Tavira')
+                    activeLocation.name === 'Cabanas de Tavira' ? 'https://maps.app.goo.gl/TvbPDjfErXy9HZCs5' :
+                    activeLocation.name === 'Fuseta' ? 'https://maps.app.goo.gl/tCEZ3PV1yBfs6pv16' :
+                    activeLocation.name === 'Altura' ? 'https://maps.app.goo.gl/8k9dtbJvcXWXBqws5' :
+                    activeLocation.name === 'Beliche Lake' ? 'https://maps.app.goo.gl/i2eAvh75ym1L32iz5' :
+                    activeLocation.name === 'The Cross-Border Special' ? 'https://maps.app.goo.gl/MiZiByj5YjBxp16U8' :
+                    'https://maps.google.com/?q=' + encodeURIComponent(activeLocation.name)
                   }
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  className="w-full py-3 bg-white text-navy font-bold rounded-xl text-sm hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-3 bg-white text-navy font-bold rounded-xl text-sm hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 shadow-xl"
                 >
                   OPEN IN MAPS <ChevronRight size={16} />
                 </a>
@@ -381,44 +205,6 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* 1.5 Booking Details */}
-        {bookingData && (
-          <section>
-            <h2 className="text-2xl font-display font-black mb-6 uppercase tracking-wider flex items-center gap-3">
-              <span className="w-8 h-px bg-electric"></span> Booking Details
-            </h2>
-            <div className="dashboard-card rounded-2xl p-6 md:p-8">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div>
-                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">Full Name</p>
-                  <p className="text-lg font-medium text-white">{bookingData.fullName || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">Email</p>
-                  <p className="text-lg font-medium text-white">{bookingData.email || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">Phone</p>
-                  <p className="text-lg font-medium text-white">{bookingData.phone || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">Date & Time</p>
-                  <p className="text-lg font-medium text-white">{bookingData.date || 'N/A'} <span className="capitalize">{bookingData.sessionTime ? `(${bookingData.sessionTime})` : ''}</span></p>
-                </div>
-                <div>
-                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">Location</p>
-                  <p className="text-lg font-medium text-white">{bookingData.location || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">Experience</p>
-                  <p className="text-lg font-medium text-white">{bookingData.experience || 'N/A'}</p>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* 2. Gear & Profile Management */}
         <section>
           <h2 className="text-2xl font-display font-black mb-6 uppercase tracking-wider flex items-center gap-3">
             <span className="w-8 h-px bg-electric"></span> Gear & Profile
@@ -428,12 +214,12 @@ export default function Dashboard() {
               <div>
                 <Shirt className="text-silver mb-4" size={28} />
                 <h3 className="font-display font-bold text-white mb-1 uppercase tracking-wider">Wetsuit Match</h3>
-                <p className="text-sm text-silver/80 mb-3">Select your size (Please request 24h in advance)</p>
+                <p className="text-sm text-silver/80 mb-3">Select your size</p>
               </div>
               <div className="relative">
                 <select 
                   value={wetsuitSize}
-                  onChange={(e) => updateReservation('wetsuitSize', e.target.value)}
+                  onChange={(e) => setWetsuitSize(e.target.value)}
                   className="w-full bg-navy border border-white/20 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-electric appearance-none cursor-pointer"
                 >
                   <option value="None">No Wetsuit</option>
@@ -504,7 +290,6 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* 3. The "Flight School" (Educational) */}
         <section>
           <h2 className="text-2xl font-display font-black mb-6 uppercase tracking-wider flex items-center gap-3">
             <span className="w-8 h-px bg-electric"></span> Flight School
@@ -565,35 +350,6 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* 4. The "After-Flight" Gallery */}
-        <section className="pb-12">
-          <h2 className="text-2xl font-display font-black mb-6 uppercase tracking-wider flex items-center gap-3">
-            <span className="w-8 h-px bg-electric"></span> After-Flight Gallery
-          </h2>
-          <div className="relative rounded-2xl overflow-hidden">
-            <div className="dashboard-card p-8 flex flex-col md:flex-row items-center justify-between gap-6 blur-sm opacity-50 pointer-events-none">
-              <div className="flex items-center gap-6">
-                <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                  <DownloadCloud className="text-white" size={32} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-display font-bold text-white mb-1 uppercase tracking-wider">Cloud Folder: Your Session Media</h3>
-                  <p className="text-silver/80 text-sm">Return here after your flight to find the link to your GoPro footage and drone shots.</p>
-                </div>
-              </div>
-              <button className="w-full md:w-auto px-8 py-3 bg-white/10 text-white/50 border border-white/20 font-bold rounded-xl text-sm cursor-not-allowed flex items-center justify-center gap-2 shrink-0">
-                AVAILABLE POST-FLIGHT
-              </button>
-            </div>
-            
-            <div className="absolute inset-0 flex items-center justify-center z-10">
-              <div className="bg-navy/80 backdrop-blur-md border border-white/20 px-8 py-4 rounded-full shadow-2xl">
-                <span className="text-white font-display font-bold uppercase tracking-widest text-lg">Coming Soon</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
       </main>
 
       {/* Modals */}
@@ -631,7 +387,7 @@ export default function Dashboard() {
                 </button>
                 <button 
                   onClick={() => {
-                    updateReservation('healthStatus', 'fit');
+                    setHealthStatus('fit');
                     setShowHealthPopup(false);
                   }}
                   className="flex-1 py-3 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 font-bold rounded-xl text-sm hover:bg-emerald-500/30 transition-colors"
@@ -675,7 +431,7 @@ export default function Dashboard() {
                 </button>
                 <button 
                   onClick={() => {
-                    updateReservation('waiverStatus', 'signed');
+                    setWaiverStatus('signed');
                     setShowWaiverPopup(false);
                   }}
                   className="flex-1 py-3 bg-electric text-navy font-bold rounded-xl text-sm hover:bg-electric/90 transition-colors"
@@ -735,9 +491,6 @@ export default function Dashboard() {
                 </button>
                 <button 
                   onClick={() => {
-                    if (experienceLevel) {
-                      updateReservation('experience', experienceLevel);
-                    }
                     setShowExperiencePopup(false);
                   }}
                   disabled={!experienceLevel}

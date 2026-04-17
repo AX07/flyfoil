@@ -449,9 +449,9 @@ export default function Landing() {
 
           <div className="flex flex-col gap-16">
             {[
-              { id: "starter-flight", icon: <GraduationCap size={40} strokeWidth={1} />, title: "Starter Flight", desc: "Learn the basics: how to handle the e-foil, balance, and get on the board safely. Perfect for absolute beginners.", duration: "20 min", price: "€60", videoId: "5rR4XPne7MU" },
-              { id: "half-experience", icon: <Waves size={40} strokeWidth={1} />, title: "Half Experience", desc: "Get a true taste of the flight. Once you're comfortable on the board, experience the thrill of gliding above the water.", duration: "30 min", price: "€80", videoId: "cuvJeTT4ksI" },
-              { id: "full-experience", icon: <Compass size={40} strokeWidth={1} />, title: "Full Experience", desc: "The ultimate adventure. Embark on a scenic route, master your turns, and enjoy the e-foiling experience to the absolute max.", duration: "1h", price: "€150", videoId: "dTxpgd_Gu6w", comingSoon: true }
+              { id: "starter-flight", icon: <GraduationCap size={40} strokeWidth={1} />, title: "Starter Flight", desc: "Learn the basics: how to handle the e-foil, balance, and get on the board safely. Perfect for absolute beginners.", duration: "20 min", price: "€60", videoId: "5rR4XPne7MU", comingSoon: false },
+              { id: "half-experience", icon: <Waves size={40} strokeWidth={1} />, title: "Half Experience", desc: "Get a true taste of the flight. Once you're comfortable on the board, experience the thrill of gliding above the water.", duration: "30 min", price: "€80", videoId: "cuvJeTT4ksI", comingSoon: false },
+              { id: "full-experience", icon: <Compass size={40} strokeWidth={1} />, title: "Full Experience", desc: "The ultimate adventure. Embark on a scenic route, master your turns, and enjoy the e-foiling experience to the absolute max.", duration: "1h", price: "€150", videoId: "dTxpgd_Gu6w", comingSoon: false }
             ].map((feature, i) => (
               <motion.div 
                 key={i}
@@ -854,7 +854,34 @@ export default function Landing() {
               <h2 className="text-4xl md:text-5xl font-display font-black mb-4 tracking-tighter uppercase text-white leading-none">
                 SECURE YOUR <span className="text-electric">SESSION</span>
               </h2>
-              <p className="text-silver/90 text-lg font-light">Enter your details and select your preferred session.</p>
+              <p className="text-silver/90 text-lg font-light mb-8">Contact us directly to book, or use the form below.</p>
+              
+              <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-10 p-6 bg-white/5 border border-white/10 rounded-2xl">
+                <a href="tel:+351961850859" className="flex items-center gap-3 text-white hover:text-electric transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-electric/20 flex items-center justify-center text-electric">
+                    <Phone size={20} />
+                  </div>
+                  <span className="font-medium">+351 961 850 859</span>
+                </a>
+                <a href="mailto:Flyfoilformosa@gmail.com" className="flex items-center gap-3 text-white hover:text-electric transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-electric/20 flex items-center justify-center text-electric">
+                    <Mail size={20} />
+                  </div>
+                  <span className="font-medium">Flyfoilformosa@gmail.com</span>
+                </a>
+                <a href="https://wa.me/351961850859" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-white hover:text-[#25D366] transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-[#25D366]/20 flex items-center justify-center text-[#25D366]">
+                    <MessageCircle size={20} />
+                  </div>
+                  <span className="font-medium">WhatsApp</span>
+                </a>
+              </div>
+              
+              <div className="flex items-center gap-4 mb-8">
+                <div className="h-px bg-white/10 flex-1"></div>
+                <span className="text-silver/50 text-sm font-medium uppercase tracking-widest">Or book online</span>
+                <div className="h-px bg-white/10 flex-1"></div>
+              </div>
             </div>
 
             <form className="space-y-6" onSubmit={async (e) => {
@@ -1038,7 +1065,7 @@ export default function Landing() {
                   >
                     <option className="bg-navy text-white">Starter Flight (20 min) - €60</option>
                     <option className="bg-navy text-white">Half Experience (30 min) - €80</option>
-                    <option className="bg-navy text-white" disabled>Full Experience (1h) - €150 (Coming Soon)</option>
+                    <option className="bg-navy text-white">Full Experience (1h) - €150</option>
                   </select>
                 </div>
               </div>
@@ -1125,16 +1152,22 @@ export default function Landing() {
             <div>
               <h4 className="font-bold mb-6 text-lg">Contact</h4>
               <ul className="space-y-3 text-silver/70">
-                <li>FlyFoil Formosa HQ</li>
+                <li><a href="https://maps.app.goo.gl/4NbKJiMcHniXSbwc7" target="_blank" rel="noopener noreferrer" className="hover:text-electric transition-colors">FlyFoil Formosa HQ</a></li>
                 <li>Ria Formosa, Portugal</li>
                 <li><a href="mailto:Flyfoilformosa@gmail.com" className="hover:text-electric transition-colors flex items-center gap-2"><Mail size={16} /> Flyfoilformosa@gmail.com</a></li>
-                <li><a href="tel:+34645349260" className="hover:text-electric transition-colors flex items-center gap-2"><Phone size={16} /> +34645349260</a></li>
+                <li><a href="tel:+351961850859" className="hover:text-electric transition-colors flex items-center gap-2"><Phone size={16} /> +351 961 850 859</a></li>
               </ul>
             </div>
           </div>
           
-          <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-silver/50">
-            <p>&copy; {new Date().getFullYear()} FLYFOILFORMOSA.COM. All rights reserved.</p>
+          <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-silver/50">
+            <div className="flex flex-col items-center md:items-start gap-4">
+              <p>&copy; {new Date().getFullYear()} FLYFOILFORMOSA.COM. FlyFoil Formosa is operated in partnership with Altura Kite (RNAAT 981/2017).</p>
+              <div className="flex items-center gap-6">
+                <img src="https://imgs.search.brave.com/8n-Fsh85cV8aawKfHyVf2rhcLGMSSihqf-rmdraypDI/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pLnBp/bmltZy5jb20vb3Jp/Z2luYWxzL2E2LzJk/LzY5L2E2MmQ2OTE1/M2U1NGY5NWFlNjE0/ODY3MjNjOTgyYTJh/LmpwZw" alt="Turismo de Portugal" className="h-12 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity" />
+                <img src="https://www.alturakites.com/assets/images/untitled-1-160x116.png" alt="Altura Kites" className="h-12 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity" />
+              </div>
+            </div>
             <div className="flex gap-6">
               <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
               <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
@@ -1145,7 +1178,7 @@ export default function Landing() {
 
       {/* Floating WhatsApp Button */}
       <a 
-        href="https://wa.me/34645349260" 
+        href="https://wa.me/351961850859" 
         target="_blank" 
         rel="noopener noreferrer"
         className="fixed bottom-24 md:bottom-6 right-6 z-50 w-14 h-14 bg-[#25D366] text-[#ffffff] rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"

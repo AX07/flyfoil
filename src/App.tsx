@@ -9,6 +9,7 @@ import NotFound from './NotFound';
 const Dashboard = lazy(() => import('./Dashboard'));
 const Login = lazy(() => import('./Login'));
 const Admin = lazy(() => import('./Admin'));
+const Welcome = lazy(() => import('./Welcome'));
 
 function AppContent() {
   const location = useLocation();
@@ -47,6 +48,7 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard/:id" element={<Dashboard />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/welcome" element={<Welcome />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

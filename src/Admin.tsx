@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { 
   Users, Calendar, Clock, MapPin, 
   CheckCircle, XCircle, Shirt, Search,
-  Filter, ChevronDown, Activity, FileSignature, BookOpen, LogIn, CalendarX, Edit2, Trash2, Plus
+  Filter, ChevronDown, Activity, FileSignature, BookOpen, LogIn, LogOut, CalendarX, Edit2, Trash2, Plus
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { collection, onSnapshot, query, orderBy, doc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
@@ -629,6 +629,18 @@ export default function Admin() {
                     </td>
                     <td className="p-4 align-top text-right">
                       <div className="flex items-center justify-end gap-2">
+                        <button 
+                          onClick={() => {
+                            const link = `${window.location.origin}/dashboard/${res.id}?token=magic_${res.id}`;
+                            navigator.clipboard.writeText(link);
+                            setAlertMessage('Magic link copied to clipboard!');
+                            setTimeout(() => setAlertMessage(null), 3000);
+                          }}
+                          className="p-2 text-electric hover:text-navy bg-electric/10 hover:bg-electric rounded-lg transition-colors"
+                          title="Copy Magic Link"
+                        >
+                          <LogOut size={16} className="rotate-180" />
+                        </button>
                         <button 
                           onClick={() => openEditModal(res)}
                           className="p-2 text-silver hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
