@@ -856,24 +856,24 @@ export default function Landing() {
               </h2>
               <p className="text-silver/90 text-lg font-light mb-8">Contact us directly to book, or use the form below.</p>
               
-              <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-10 p-6 bg-white/5 border border-white/10 rounded-2xl">
-                <a href="tel:+351961850859" className="flex items-center gap-3 text-white hover:text-electric transition-colors">
-                  <div className="w-10 h-10 rounded-full bg-electric/20 flex items-center justify-center text-electric">
+              <div className="flex flex-col md:flex-row items-center justify-center w-full gap-4 md:gap-6 mb-10 p-4 md:p-6 bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+                <a href="tel:+351961850859" className="flex items-center gap-3 text-white hover:text-electric transition-colors w-full md:w-auto justify-center">
+                  <div className="w-10 h-10 rounded-full bg-electric/20 flex items-center justify-center shrink-0 text-electric">
                     <Phone size={20} />
                   </div>
-                  <span className="font-medium">+351 961 850 859</span>
+                  <span className="font-medium text-sm md:text-base whitespace-nowrap">+351 961 850 859</span>
                 </a>
-                <a href="mailto:Flyfoilformosa@gmail.com" className="flex items-center gap-3 text-white hover:text-electric transition-colors">
-                  <div className="w-10 h-10 rounded-full bg-electric/20 flex items-center justify-center text-electric">
+                <a href="mailto:Flyfoilformosa@gmail.com" className="flex items-center gap-3 text-white hover:text-electric transition-colors w-full md:w-auto justify-center">
+                  <div className="w-10 h-10 rounded-full bg-electric/20 flex items-center justify-center shrink-0 text-electric">
                     <Mail size={20} />
                   </div>
-                  <span className="font-medium">Flyfoilformosa@gmail.com</span>
+                  <span className="font-medium text-xs sm:text-sm md:text-base truncate">Flyfoilformosa@gmail.com</span>
                 </a>
-                <a href="https://wa.me/351961850859" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-white hover:text-[#25D366] transition-colors">
-                  <div className="w-10 h-10 rounded-full bg-[#25D366]/20 flex items-center justify-center text-[#25D366]">
+                <a href="https://wa.me/351961850859" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-white hover:text-[#25D366] transition-colors w-full md:w-auto justify-center">
+                  <div className="w-10 h-10 rounded-full bg-[#25D366]/20 flex items-center justify-center shrink-0 text-[#25D366]">
                     <MessageCircle size={20} />
                   </div>
-                  <span className="font-medium">WhatsApp</span>
+                  <span className="font-medium text-sm md:text-base whitespace-nowrap">WhatsApp</span>
                 </a>
               </div>
               
@@ -1165,7 +1165,7 @@ export default function Landing() {
               <p>&copy; {new Date().getFullYear()} FLYFOILFORMOSA.COM. FlyFoil Formosa is operated in partnership with Altura Kite (RNAAT 981/2017).</p>
               <div className="flex items-center gap-6">
                 <img src="https://imgs.search.brave.com/8n-Fsh85cV8aawKfHyVf2rhcLGMSSihqf-rmdraypDI/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pLnBp/bmltZy5jb20vb3Jp/Z2luYWxzL2E2LzJk/LzY5L2E2MmQ2OTE1/M2U1NGY5NWFlNjE0/ODY3MjNjOTgyYTJh/LmpwZw" alt="Turismo de Portugal" className="h-12 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity" />
-                <img src="https://www.alturakites.com/assets/images/untitled-1-160x116.png" alt="Altura Kites" className="h-12 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity" />
+                <img src="https://www.alturakites.com/assets/images/untitled-1-160x116.png" alt="Altura Kites" className={`h-12 w-auto object-contain transition-all ${isDarkMode ? 'opacity-70 hover:opacity-100 brightness-0 invert' : 'opacity-70 hover:opacity-100'}`} />
               </div>
             </div>
             <div className="flex gap-6">
