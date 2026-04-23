@@ -9,10 +9,11 @@ import {
   MapPin, Calendar, CreditCard, Bitcoin, Check, 
   MessageCircle, ChevronRight, ChevronLeft, Star, Play, Waves, Compass,
   Gift, UserCheck, LifeBuoy, Sun, Moon, User, Mail, Phone, Clock, Info,
-  Instagram, Youtube, FileSignature
+  Instagram, Youtube, FileSignature, Globe
 } from 'lucide-react';
 import { collection, addDoc, doc, getDoc, writeBatch } from 'firebase/firestore';
 import { db } from './firebase';
+import { useLanguage } from './LanguageContext';
 
 const createCustomIcon = (isActive: boolean) => L.divIcon({
   className: 'custom-leaflet-icon',
@@ -36,24 +37,27 @@ function MapUpdater({ center }: { center: [number, number] }) {
 
 export default function Landing() {
   const navigate = useNavigate();
+  const { language, setLanguage, t } = useLanguage();
   const locations = [
-    { id: "beliche", name: "Beliche Lake", desc: "Freshwater perfection / Smooth, glassy conditions surrounded by nature. Perfect for beginners.", highlight: true, videoId: "0jDCjP4FvCA", coords: [[37.275, -7.535] as [number, number]] },
-    { id: "fuseta", name: "Fuseta", desc: "Golden sands & open horizon for long glides.", highlight: false, videoId: "iX9567Pd0Us", coords: [[37.050, -7.745] as [number, number]] },
-    { id: "cabanas", name: "Cabanas de Tavira", desc: "Home Base / Crystal Calm waters.", highlight: false, videoId: "_f3zSvTuUl4", coords: [[37.133, -7.590] as [number, number]] },
-    { id: "altura", name: "Altura", desc: "Wide open bays perfect for cruising and carving.", highlight: false, videoId: "iX9567Pd0Us", coords: [[37.173, -7.495] as [number, number]] },
-    { id: "cross-border", name: "The Cross-Border Special", desc: "Vila Real to Isla Cristina (Spain). A unique international flight.", highlight: false, videoId: "jJYbSImw_HE", coords: [[37.195, -7.415] as [number, number], [37.200, -7.320] as [number, number]] }
+    { id: "beliche", name: t('loc.beliche.name'), desc: t('loc.beliche.desc'), highlight: true, videoId: "0jDCjP4FvCA", coords: [[37.275, -7.535] as [number, number]] },
+    { id: "fuseta", name: t('loc.fuseta.name'), desc: t('loc.fuseta.desc'), highlight: false, videoId: "iX9567Pd0Us", coords: [[37.050, -7.745] as [number, number]] },
+    { id: "cabanas", name: t('loc.cabanas.name'), desc: t('loc.cabanas.desc'), highlight: false, videoId: "_f3zSvTuUl4", coords: [[37.133, -7.590] as [number, number]] },
+    { id: "altura", name: t('loc.altura.name'), desc: t('loc.altura.desc'), highlight: false, videoId: "iX9567Pd0Us", coords: [[37.173, -7.495] as [number, number]] },
+    { id: "cross-border", name: t('loc.cross.name'), desc: t('loc.cross.desc'), highlight: false, videoId: "jJYbSImw_HE", coords: [[37.195, -7.415] as [number, number], [37.200, -7.320] as [number, number]] }
   ];
 
   const videos = ["mN7_Nz5d0oM", "AxWRIK85GgM", "b4yCyD4L2kE"];
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
     return saved !== null ? saved === 'dark' : true;
   });
-  const [activeLocation, setActiveLocation] = useState(locations[2]); // Default to Cabanas
-  const [selectedExperience, setSelectedExperience] = useState("Starter Flight (20 min) - €60");
+  const [activeLocationId, setActiveLocationId] = useState(locations[2].id); // Default to Cabanas
+  const activeLocation = locations.find(l => l.id === activeLocationId) || locations[2];
+  const [selectedExperience, setSelectedExperience] = useState(() => t('pricing.starter.title') + " - €180");
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
   const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0);
@@ -101,24 +105,24 @@ export default function Landing() {
 
   const faqs = [
     {
-      question: "Is it difficult?",
-      answer: "Think of it like riding a bike—it takes a little balance at first, but once you get it, it's magical. 'Taxiing' on your knees is fun and achievable in 10-20 mins. And remember, falling into the water is part of the adventure!"
+      question: t('faq1.q'),
+      answer: t('faq1.a')
     },
     {
-      question: "Do I need to be an athlete?",
-      answer: "Not at all! If you can stand up from a kneeling position, you can eFoil. Our boards are designed for stability and our instructors guide you at your own pace."
+      question: t('faq2.q'),
+      answer: t('faq2.a')
     },
     {
-      question: "What should I bring?",
-      answer: "Just bring swimwear, a towel, and sunscreen. We provide the eFoil, helmet, life jacket, and wetsuit (if needed)."
+      question: t('faq3.q'),
+      answer: t('faq3.a')
     },
     {
-      question: "Is it safe for the Ria Formosa environment?",
-      answer: "Absolutely. Our eFoils use 100% electric, silent motors. There are no emissions, no wake to disturb the shoreline, and no noise pollution, making it perfectly safe for the local marine life."
+      question: t('faq4.q'),
+      answer: t('faq4.a')
     },
     {
-      question: "What is the minimum age?",
-      answer: "Riders must be at least 12 years old. Anyone under 18 needs a parent or guardian present to sign the digital waiver."
+      question: t('faq5.q'),
+      answer: t('faq5.a')
     }
   ];
 
@@ -181,20 +185,59 @@ export default function Landing() {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-8">
+            <div className="relative">
+              <button 
+                onClick={() => setIsLangMenuOpen(!isLangMenuOpen)} 
+                className="flex items-center gap-1.5 p-2 rounded-full hover:bg-white/10 transition-colors text-white font-medium text-sm"
+              >
+                <Globe size={18} />
+                <span className="uppercase">{language}</span>
+              </button>
+              <AnimatePresence>
+                {isLangMenuOpen && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute top-full mt-2 w-32 right-0 bg-navy/95 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden py-2 drop-shadow-2xl z-50"
+                  >
+                    <button 
+                      onClick={() => { setLanguage('en'); setIsLangMenuOpen(false); }}
+                      className={`w-full text-left px-4 py-2 text-sm transition-colors ${language === 'en' ? 'text-electric font-bold' : 'text-white hover:bg-white/10'}`}
+                    >
+                      English
+                    </button>
+                    <button 
+                      onClick={() => { setLanguage('pt'); setIsLangMenuOpen(false); }}
+                      className={`w-full text-left px-4 py-2 text-sm transition-colors ${language === 'pt' ? 'text-electric font-bold' : 'text-white hover:bg-white/10'}`}
+                    >
+                      Português
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            
             <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 rounded-full hover:bg-white/10 transition-colors text-white" aria-label="Toggle theme">
               {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
-            <button onClick={() => scrollTo('experience')} className="text-sm font-medium hover:text-electric transition-colors">The Experience</button>
-            <button onClick={() => scrollTo('locations')} className="text-sm font-medium hover:text-electric transition-colors">Locations</button>
-            <button onClick={() => scrollTo('pricing')} className="text-sm font-medium hover:text-electric transition-colors">Pricing</button>
-            <button onClick={() => navigate('/login')} className="text-sm font-medium text-electric hover:text-white transition-colors">Flight Deck</button>
+            <button onClick={() => scrollTo('experience')} className="text-sm font-medium hover:text-electric transition-colors">{t('nav.experience')}</button>
+            <button onClick={() => scrollTo('locations')} className="text-sm font-medium hover:text-electric transition-colors">{t('nav.locations')}</button>
+            <button onClick={() => scrollTo('pricing')} className="text-sm font-medium hover:text-electric transition-colors">{t('nav.pricing')}</button>
+            <button onClick={() => navigate('/login')} className="text-sm font-medium text-electric hover:text-white transition-colors">{t('nav.flightdeck')}</button>
             <button onClick={() => scrollTo('booking')} className="px-6 py-2.5 bg-transparent border-2 border-white text-white font-bold rounded-full hover:bg-white hover:text-navy transition-all duration-300">
-              BOOK NOW
+              {t('nav.booknow')}
             </button>
           </div>
 
           {/* Mobile Menu Toggle */}
           <div className="flex items-center gap-4 md:hidden">
+            <button 
+              onClick={() => setLanguage(language === 'en' ? 'pt' : 'en')} 
+              className="px-2 py-1 border border-white/20 rounded font-medium text-xs text-white uppercase"
+            >
+              {language}
+            </button>
             <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 rounded-full hover:bg-white/10 transition-colors text-white" aria-label="Toggle theme">
               {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
@@ -212,12 +255,12 @@ export default function Landing() {
           animate={{ opacity: 1, y: 0 }}
           className="fixed inset-0 z-40 bg-navy/95 backdrop-blur-xl pt-24 px-6 flex flex-col gap-6 md:hidden"
         >
-          <button onClick={() => scrollTo('experience')} className="text-2xl font-medium text-left border-b border-white/10 pb-4">The Experience</button>
-          <button onClick={() => scrollTo('locations')} className="text-2xl font-medium text-left border-b border-white/10 pb-4">Locations</button>
-          <button onClick={() => scrollTo('pricing')} className="text-2xl font-medium text-left border-b border-white/10 pb-4">Pricing</button>
-          <button onClick={() => navigate('/login')} className="text-2xl font-medium text-left border-b border-white/10 pb-4 text-electric">Flight Deck Login</button>
+          <button onClick={() => scrollTo('experience')} className="text-2xl font-medium text-left border-b border-white/10 pb-4">{t('nav.experience')}</button>
+          <button onClick={() => scrollTo('locations')} className="text-2xl font-medium text-left border-b border-white/10 pb-4">{t('nav.locations')}</button>
+          <button onClick={() => scrollTo('pricing')} className="text-2xl font-medium text-left border-b border-white/10 pb-4">{t('nav.pricing')}</button>
+          <button onClick={() => navigate('/login')} className="text-2xl font-medium text-left border-b border-white/10 pb-4 text-electric">{t('nav.flightdeck')}</button>
           <button onClick={() => scrollTo('booking')} className="mt-4 px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-full text-xl text-center hover:bg-white hover:text-navy transition-all duration-300">
-            BOOK NOW
+            {t('nav.booknow')}
           </button>
         </motion.div>
       )}
@@ -246,7 +289,7 @@ export default function Landing() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-display font-black tracking-tighter mb-4 md:mb-6 text-white leading-none drop-shadow-2xl"
           >
-            EFOIL OVER THE <span className="text-transparent bg-clip-text bg-gradient-to-r from-silver to-white drop-shadow-xl">ALGARVE.</span>
+            {t('hero.title1')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-silver to-white">{t('hero.title2')}</span>
           </motion.h1>
           
           <motion.p 
@@ -255,7 +298,7 @@ export default function Landing() {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="text-base sm:text-lg md:text-xl text-silver/90 max-w-2xl mb-8 md:mb-12 font-light px-4 drop-shadow-lg"
           >
-            A unique way to experience nature in the Ría Formosa. Glide over crystal waters with our zero-emission electric hydrofoils.
+            {t('hero.subtitle')}
           </motion.p>
 
           <motion.div 
@@ -268,24 +311,24 @@ export default function Landing() {
             {[
               { 
                 id: "starter-flight", 
-                title: "Starter Flight", 
-                price: "€60", 
-                desc: "20 min Instruction Session",
+                title: t('pricing.starter.title'), 
+                price: "€120", 
+                desc: t('pricing.starter.desc'),
                 icon: <GraduationCap size={56} strokeWidth={1} className="mb-4 text-white group-hover:text-electric transition-colors duration-300" />
               },
               { 
                 id: "half-experience", 
-                title: "Half Experience", 
-                price: "€80", 
-                desc: "30 min Glide", 
+                title: t('pricing.half.title'), 
+                price: "€160", 
+                desc: t('pricing.half.desc'), 
                 popular: true,
                 icon: <Waves size={56} strokeWidth={1} className="mb-4 text-white group-hover:text-electric transition-colors duration-300" />
               },
               { 
                 id: "full-experience", 
-                title: "Full Experience", 
+                title: t('pricing.full.title'), 
                 price: "€150", 
-                desc: "1h Pro Session",
+                desc: t('pricing.full.desc'),
                 icon: <Compass size={56} strokeWidth={1} className="mb-4 text-white group-hover:text-electric transition-colors duration-300" />
               }
             ].map((plan, i) => (
@@ -294,7 +337,7 @@ export default function Landing() {
                 onClick={() => scrollTo(plan.id)}
                 className="cursor-pointer relative p-2 sm:p-4 md:p-6 flex flex-col items-center text-center transition-transform hover:scale-105 group drop-shadow-lg"
               >
-                {plan.popular && <div className="absolute -top-4 md:-top-2 left-1/2 -translate-x-1/2 text-electric text-[8px] md:text-[10px] font-bold px-2 md:px-3 py-1 tracking-widest uppercase drop-shadow-md">MOST POPULAR</div>}
+                {plan.popular && <div className="absolute -top-4 md:-top-2 left-1/2 -translate-x-1/2 text-electric text-[8px] md:text-[10px] font-bold px-2 md:px-3 py-1 tracking-widest uppercase drop-shadow-md">{t('pricing.popular')}</div>}
                 <div className="transform group-hover:-translate-y-2 transition-transform duration-300 scale-75 sm:scale-100 drop-shadow-xl">
                   {plan.icon}
                 </div>
@@ -312,7 +355,7 @@ export default function Landing() {
             onClick={() => scrollTo('booking')}
             className="px-6 py-3 md:px-8 md:py-4 bg-white text-navy font-bold rounded-xl text-sm md:text-lg hover:bg-silver transition-all duration-300 flex items-center gap-2 group"
           >
-            SECURE YOUR SESSION <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            {t('common.secureSession')} <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
           </motion.button>
         </div>
       </section>
@@ -339,9 +382,9 @@ export default function Landing() {
             className="text-center mb-20"
           >
             <h2 className="text-4xl md:text-6xl font-display font-black mb-4 tracking-tighter uppercase text-white leading-none">
-              THE <span className="text-electric">EXPERIENCE</span>
+              {t('exp.title1')} <span className="text-electric">{t('exp.title2')}</span>
             </h2>
-            <p className="text-silver/90 max-w-2xl mx-auto font-light text-lg md:text-xl">Everything you need to fly above the water safely and effortlessly.</p>
+            <p className="text-silver/90 max-w-2xl mx-auto font-light text-lg md:text-xl">{t('exp.subtitle')}</p>
           </motion.div>
 
           {/* Features - Mobile Carousel with Buttons */}
@@ -354,23 +397,23 @@ export default function Landing() {
                 {[
                   {
                     icon: <MapPin size={40} strokeWidth={1.5} className="text-white mb-6" />,
-                    title: "BREATHTAKING LOCATIONS",
-                    desc: "Available across the stunning Ria Formosa and East Algarve coast."
+                    title: t('exp.grid1.title'),
+                    desc: t('exp.grid1.desc')
                   },
                   {
                     icon: <Gift size={40} strokeWidth={1.5} className="text-white mb-6" />,
-                    title: "GIFT VOUCHERS AVAILABLE!",
-                    desc: <>Give the gift of flight & fun. <strong className="text-white font-medium">Purchase at checkout!</strong></>
+                    title: t('exp.grid2.title'),
+                    desc: <>{t('exp.grid2.desc1')}<strong className="text-white font-medium">{t('exp.grid2.desc2')}</strong></>
                   },
                   {
                     icon: <UserCheck size={40} strokeWidth={1.5} className="text-white mb-6" />,
-                    title: "QUALIFIED INSTRUCTOR",
-                    desc: "Full safety briefing, demonstration and instruction on how to operate the eFoil + Controller."
+                    title: t('exp.grid3.title'),
+                    desc: t('exp.grid3.desc')
                   },
                   {
                     icon: <LifeBuoy size={40} strokeWidth={1.5} className="text-white mb-6" />,
-                    title: "SAFETY EQUIPMENT",
-                    desc: <>Life jackets and helmets to ensure safety on the water. <strong className="text-white font-medium">Full public liability + accident insurance included.</strong> Wetsuits available!</>
+                    title: t('exp.grid4.title'),
+                    desc: <>{t('exp.grid4.desc1')}<strong className="text-white font-medium">{t('exp.grid4.desc2')}</strong> {t('exp.grid4.desc3')}</>
                   }
                 ].map((feature, idx) => (
                   <div key={idx} className="w-full shrink-0 p-8 flex flex-col items-center text-center">
@@ -413,23 +456,23 @@ export default function Landing() {
             {[
               {
                 icon: <MapPin size={40} strokeWidth={1.5} className="text-white group-hover:text-electric transition-colors duration-300 mb-6" />,
-                title: "BREATHTAKING LOCATIONS",
-                desc: "Available across the stunning Ria Formosa and East Algarve coast."
+                title: t('exp.grid1.title'),
+                desc: t('exp.grid1.desc')
               },
               {
                 icon: <Gift size={40} strokeWidth={1.5} className="text-white group-hover:text-electric transition-colors duration-300 mb-6" />,
-                title: "GIFT VOUCHERS AVAILABLE!",
-                desc: <>Give the gift of flight & fun. <strong className="text-white font-medium">Purchase at checkout!</strong></>
+                title: t('exp.grid2.title'),
+                desc: <>{t('exp.grid2.desc1')}<strong className="text-white font-medium">{t('exp.grid2.desc2')}</strong></>
               },
               {
                 icon: <UserCheck size={40} strokeWidth={1.5} className="text-white group-hover:text-electric transition-colors duration-300 mb-6" />,
-                title: "QUALIFIED INSTRUCTOR",
-                desc: "Full safety briefing, demonstration and instruction on how to operate the eFoil + Controller."
+                title: t('exp.grid3.title'),
+                desc: t('exp.grid3.desc')
               },
               {
                 icon: <LifeBuoy size={40} strokeWidth={1.5} className="text-white group-hover:text-electric transition-colors duration-300 mb-6" />,
-                title: "SAFETY EQUIPMENT",
-                desc: <>Life jackets and helmets to ensure safety on the water. <strong className="text-white font-medium">Full public liability + accident insurance included.</strong> Wetsuits available!</>
+                title: t('exp.grid4.title'),
+                desc: <>{t('exp.grid4.desc1')}<strong className="text-white font-medium">{t('exp.grid4.desc2')}</strong> {t('exp.grid4.desc3')}</>
               }
             ].map((feature, idx) => (
               <motion.div 
@@ -449,9 +492,9 @@ export default function Landing() {
 
           <div className="flex flex-col gap-16">
             {[
-              { id: "starter-flight", icon: <GraduationCap size={40} strokeWidth={1} />, title: "Starter Flight", desc: "Learn the basics: how to handle the e-foil, balance, and get on the board safely. Perfect for absolute beginners.", duration: "20 min", price: "€60", videoId: "5rR4XPne7MU", comingSoon: false },
-              { id: "half-experience", icon: <Waves size={40} strokeWidth={1} />, title: "Half Experience", desc: "Get a true taste of the flight. Once you're comfortable on the board, experience the thrill of gliding above the water.", duration: "30 min", price: "€80", videoId: "cuvJeTT4ksI", comingSoon: false },
-              { id: "full-experience", icon: <Compass size={40} strokeWidth={1} />, title: "Full Experience", desc: "The ultimate adventure. Embark on a scenic route, master your turns, and enjoy the e-foiling experience to the absolute max.", duration: "1h", price: "€150", videoId: "dTxpgd_Gu6w", comingSoon: false }
+              { id: "starter-flight", icon: <GraduationCap size={40} strokeWidth={1} />, title: t('pricing.starter.title'), desc: t('pricing.starter.longDesc'), duration: "20 min/pax", price: "€180", videoId: "5rR4XPne7MU", comingSoon: false },
+              { id: "half-experience", icon: <Waves size={40} strokeWidth={1} />, title: t('pricing.half.title'), desc: t('pricing.half.longDesc'), duration: "30 min/pax", price: "€160", videoId: "cuvJeTT4ksI", comingSoon: false },
+              { id: "full-experience", icon: <Compass size={40} strokeWidth={1} />, title: t('pricing.full.title'), desc: t('pricing.full.longDesc'), duration: "1h", price: "€150", videoId: "dTxpgd_Gu6w", comingSoon: false }
             ].map((feature, i) => (
               <motion.div 
                 key={i}
@@ -494,14 +537,14 @@ export default function Landing() {
                     </div>
                     {feature.comingSoon ? (
                       <button disabled className="px-8 py-4 bg-white/5 border border-white/10 text-white/50 text-sm font-bold tracking-widest uppercase rounded-xl cursor-not-allowed text-center">
-                        Coming Soon
+                        {t('common.comingSoon')}
                       </button>
                     ) : (
                       <button onClick={() => {
                         setSelectedExperience(`${feature.title} (${feature.duration}) - ${feature.price}`);
                         scrollTo('locations');
                       }} className="px-8 py-4 bg-navy border border-white/10 text-white text-sm font-bold tracking-widest uppercase rounded-xl hover:bg-white hover:text-navy transition-all duration-300 text-center">
-                        Book this flight
+                        {t('common.bookThisFlight')}
                       </button>
                     )}
                   </div>
@@ -524,8 +567,8 @@ export default function Landing() {
             className="mb-16 md:flex justify-between items-end"
           >
             <div>
-              <h2 className="text-3xl md:text-5xl font-display font-black mb-4 uppercase leading-none">Choose Your Flight Zone</h2>
-              <p className="text-silver max-w-xl">Discover the most pristine waters in the Algarve, handpicked for the perfect e-foil experience.</p>
+              <h2 className="text-3xl md:text-5xl font-display font-black mb-4 uppercase leading-none">{t('loc.title')}</h2>
+              <p className="text-silver max-w-xl">{t('loc.subtitle')}</p>
             </div>
           </motion.div>
 
@@ -538,7 +581,7 @@ export default function Landing() {
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  onClick={() => setActiveLocation(loc)}
+                  onClick={() => setActiveLocationId(loc.id)}
                   className={`p-6 rounded-2xl cursor-pointer transition-all duration-300 border-2 ${activeLocation.id === loc.id ? 'bg-white text-navy border-white shadow-[0_0_30px_rgba(255,255,255,0.3)]' : 'bg-transparent border-white/20 text-white hover:border-white/50'}`}
                 >
                   <div className="flex justify-between items-start mb-2">
@@ -581,7 +624,7 @@ export default function Landing() {
                         position={coord}
                         icon={createCustomIcon(activeLocation.id === loc.id)}
                         eventHandlers={{
-                          click: () => setActiveLocation(loc),
+                          click: () => setActiveLocationId(loc.id),
                         }}
                       />
                     ))
@@ -620,7 +663,7 @@ export default function Landing() {
               onClick={() => scrollTo('booking')} 
               className="px-8 py-4 bg-white text-navy text-sm font-bold tracking-widest uppercase rounded-xl hover:bg-silver transition-all duration-300 text-center"
             >
-              Secure Your Session
+              {t('common.secureSession')}
             </button>
           </div>
         </div>
@@ -629,10 +672,10 @@ export default function Landing() {
       {/* Social Media */}
       <section className="py-24 bg-navy overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 mb-12 text-center">
-          <h2 className="text-3xl md:text-5xl font-display font-black mb-4 uppercase leading-none">Social Media</h2>
-          <p className="text-silver mb-6">See what it's like to fly with us.</p>
+          <h2 className="text-3xl md:text-5xl font-display font-black mb-4 uppercase leading-none">{t('social.title')}</h2>
+          <p className="text-silver mb-6">{t('social.subtitle')}</p>
           <div className="flex items-center justify-center gap-4 flex-wrap">
-            <span className="text-white font-bold tracking-widest uppercase text-sm">Follow Us</span>
+            <span className="text-white font-bold tracking-widest uppercase text-sm">{t('social.follow')}</span>
             <a href="https://www.instagram.com/flyfoilformosa/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-electric hover:text-navy hover:border-electric transition-all">
               <Instagram size={20} />
             </a>
@@ -785,8 +828,8 @@ export default function Landing() {
         <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
         <div className="max-w-3xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-display font-black mb-4 uppercase leading-none">Got Questions?</h2>
-            <p className="text-silver">Everything you need to know before your flight.</p>
+            <h2 className="text-3xl md:text-5xl font-display font-black mb-4 uppercase leading-none">{t('faq.title')}</h2>
+            <p className="text-silver">{t('faq.subtitle')}</p>
           </div>
 
           <div className="space-y-4">
@@ -852,9 +895,9 @@ export default function Landing() {
             
             <div className="text-center mb-10">
               <h2 className="text-4xl md:text-5xl font-display font-black mb-4 tracking-tighter uppercase text-white leading-none">
-                SECURE YOUR <span className="text-electric">SESSION</span>
+                {t('booking.title1')} <span className="text-electric">{t('booking.title2')}</span>
               </h2>
-              <p className="text-silver/90 text-lg font-light mb-8">Contact us directly to book, or use the form below.</p>
+              <p className="text-silver/90 text-lg font-light mb-8">{t('common.contactUs')}</p>
               
               <div className="flex flex-col md:flex-row items-center justify-center w-full gap-4 md:gap-6 mb-10 p-4 md:p-6 bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
                 <a href="tel:+351961850859" className="flex items-center gap-3 text-white hover:text-electric transition-colors w-full md:w-auto justify-center">
@@ -879,7 +922,7 @@ export default function Landing() {
               
               <div className="flex items-center gap-4 mb-8">
                 <div className="h-px bg-white/10 flex-1"></div>
-                <span className="text-silver/50 text-sm font-medium uppercase tracking-widest">Or book online</span>
+                <span className="text-silver/50 text-sm font-medium uppercase tracking-widest">{t('common.bookOnline')}</span>
                 <div className="h-px bg-white/10 flex-1"></div>
               </div>
             </div>
@@ -977,28 +1020,28 @@ export default function Landing() {
             }}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm text-silver font-medium">Full Name</label>
+                  <label className="text-sm text-silver font-medium">{t('booking.name')}</label>
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-silver/50" size={20} />
                     <input type="text" name="fullName" placeholder="John Doe" className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-electric transition-colors" required />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm text-silver font-medium">Email Address</label>
+                  <label className="text-sm text-silver font-medium">{t('booking.email')}</label>
                   <div className="relative">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-silver/50" size={20} />
                     <input type="email" name="email" placeholder="john@example.com" className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-electric transition-colors" required />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm text-silver font-medium">Phone Number</label>
+                  <label className="text-sm text-silver font-medium">{t('booking.phone')}</label>
                   <div className="relative">
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-silver/50" size={20} />
                     <input type="tel" name="phone" placeholder="+1 234 567 890" className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-electric transition-colors" required />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm text-silver font-medium">Select Date</label>
+                  <label className="text-sm text-silver font-medium">{t('booking.date')}</label>
                   <div className="relative">
                     <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-silver/50" size={20} />
                     <input 
@@ -1014,7 +1057,7 @@ export default function Landing() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm text-silver font-medium">
-                    Session Time {isCheckingAvailability && <span className="text-electric text-xs ml-2 animate-pulse">Checking availability...</span>}
+                    {t('booking.time')} {isCheckingAvailability && <span className="text-electric text-xs ml-2 animate-pulse">{t('booking.checking')}</span>}
                   </label>
                   <div className="relative">
                     <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-silver/50" size={20} />
@@ -1026,46 +1069,43 @@ export default function Landing() {
                       required
                       disabled={!selectedDate || isCheckingAvailability}
                     >
-                      <option value="" disabled className="bg-navy text-white">Select a session</option>
+                      <option value="" disabled className="bg-navy text-white">{t('booking.selectSession')}</option>
                       <option value="morning" disabled={!availableSlots.morning} className="bg-navy text-white">
-                        Morning (10:00 - 13:00) {!availableSlots.morning ? '- Fully Booked' : ''}
+                        {t('booking.morning')} {!availableSlots.morning ? t('booking.bookedOut') : ''}
                       </option>
                       <option value="evening" disabled={!availableSlots.evening} className="bg-navy text-white">
-                        Evening (15:00 - 18:00) {!availableSlots.evening ? '- Fully Booked' : ''}
+                        {t('booking.evening')} {!availableSlots.evening ? t('booking.bookedOut') : ''}
                       </option>
                     </select>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm text-silver font-medium">Select Location</label>
+                  <label className="text-sm text-silver font-medium">{t('booking.location')}</label>
                   <div className="relative">
                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-silver/50" size={20} />
                     <select 
                       name="location"
-                      value={activeLocation.name}
-                      onChange={(e) => {
-                        const loc = locations.find(l => l.name === e.target.value);
-                        if (loc) setActiveLocation(loc);
-                      }}
+                      value={activeLocation.id}
+                      onChange={(e) => setActiveLocationId(e.target.value)}
                       className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-electric transition-colors appearance-none"
                     >
                       {locations.map(loc => (
-                        <option key={loc.id} value={loc.name} className="bg-navy text-white">{loc.name}</option>
+                        <option key={loc.id} value={loc.id} className="bg-navy text-white">{loc.name}</option>
                       ))}
                     </select>
                   </div>
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm text-silver font-medium">Experience Type</label>
+                  <label className="text-sm text-silver font-medium">{t('booking.type')}</label>
                   <select 
                     name="experience"
                     value={selectedExperience}
                     onChange={(e) => setSelectedExperience(e.target.value)}
                     className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-4 text-white focus:outline-none focus:border-electric transition-colors appearance-none"
                   >
-                    <option className="bg-navy text-white">Starter Flight (20 min) - €60</option>
-                    <option className="bg-navy text-white">Half Experience (30 min) - €80</option>
-                    <option className="bg-navy text-white">Full Experience (1h) - €150</option>
+                    <option className="bg-navy text-white" value={t('pricing.starter.title') + " - €180"}>{t('pricing.starter.title')} - €180</option>
+                    <option className="bg-navy text-white" value={t('pricing.half.title') + " - €160"}>{t('pricing.half.title')} - €160</option>
+                    <option className="bg-navy text-white" value={t('pricing.full.title') + " - €150"}>{t('pricing.full.title')} - €150</option>
                   </select>
                 </div>
               </div>
@@ -1074,8 +1114,8 @@ export default function Landing() {
                 <div className="bg-electric/10 border border-electric/20 rounded-xl p-4 flex items-start gap-3">
                   <Info className="text-electric shrink-0 mt-0.5" size={20} />
                   <div className="text-sm text-silver/90 space-y-1">
-                    <p><strong className="text-white">Payment is done on site</strong>, or on the day of the ride.</p>
-                    <p>Times and locations may vary depending on weather and tide conditions.</p>
+                    <p><strong className="text-white">{t('booking.paymentInfo')}</strong>{t('booking.paymentInfo2')}</p>
+                    <p>{t('booking.weatherInfo')}</p>
                   </div>
                 </div>
               </div>
@@ -1089,13 +1129,13 @@ export default function Landing() {
                     </div>
                   </div>
                   <span className="text-sm text-silver/80 leading-relaxed">
-                    I agree to the <button type="button" onClick={(e) => { e.preventDefault(); setShowWaiverPopup(true); }} className="text-electric hover:underline">Digital Waiver & Liability Form</button> and confirm I am able to swim.
+                    {t('booking.waiver1')}<button type="button" onClick={(e) => { e.preventDefault(); setShowWaiverPopup(true); }} className="text-electric hover:underline">{t('booking.waiverLink')}</button>{t('booking.waiver2')}
                   </span>
                 </label>
               </div>
 
               <button type="submit" className="w-full py-4 bg-electric text-navy font-bold rounded-xl text-lg hover:bg-white transition-all duration-300">
-                CONFIRM BOOKING
+                {t('common.confirmBooking')}
               </button>
             </form>
           </motion.div>
@@ -1115,7 +1155,7 @@ export default function Landing() {
                   loading="lazy"
                 />
                 <p className="text-silver/70 max-w-sm">
-                  The ultimate noise-free, zero-emission electric hydrofoil experience in the Algarve.
+                  {t('footer.desc')}
                 </p>
               </div>
               <div className="flex gap-4">
@@ -1139,21 +1179,21 @@ export default function Landing() {
             </div>
             
             <div>
-              <h4 className="font-bold mb-6 text-lg">Quick Links</h4>
+              <h4 className="font-bold mb-6 text-lg">{t('footer.quickLinks')}</h4>
               <ul className="space-y-3 text-silver/70">
-                <li><button onClick={() => scrollTo('experience')} className="hover:text-electric transition-colors">The Experience</button></li>
-                <li><button onClick={() => scrollTo('locations')} className="hover:text-electric transition-colors">Locations</button></li>
-                <li><button onClick={() => scrollTo('pricing')} className="hover:text-electric transition-colors">Pricing</button></li>
-                <li><a href="#" className="hover:text-electric transition-colors">FAQ</a></li>
-                <li><Link to="/admin" className="hover:text-electric transition-colors">Admin</Link></li>
+                <li><button onClick={() => scrollTo('experience')} className="hover:text-electric transition-colors">{t('nav.experience')}</button></li>
+                <li><button onClick={() => scrollTo('locations')} className="hover:text-electric transition-colors">{t('nav.locations')}</button></li>
+                <li><button onClick={() => scrollTo('pricing')} className="hover:text-electric transition-colors">{t('nav.pricing')}</button></li>
+                <li><a href="#" className="hover:text-electric transition-colors">{t('footer.faq')}</a></li>
+                <li><Link to="/admin" className="hover:text-electric transition-colors">{t('footer.admin')}</Link></li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-bold mb-6 text-lg">Contact</h4>
+              <h4 className="font-bold mb-6 text-lg">{t('footer.contact')}</h4>
               <ul className="space-y-3 text-silver/70">
-                <li><a href="https://maps.app.goo.gl/4NbKJiMcHniXSbwc7" target="_blank" rel="noopener noreferrer" className="hover:text-electric transition-colors">FlyFoil Formosa HQ</a></li>
-                <li>Ria Formosa, Portugal</li>
+                <li><a href="https://maps.app.goo.gl/4NbKJiMcHniXSbwc7" target="_blank" rel="noopener noreferrer" className="hover:text-electric transition-colors">{t('footer.hq')}</a></li>
+                <li>{t('footer.location')}</li>
                 <li><a href="mailto:Flyfoilformosa@gmail.com" className="hover:text-electric transition-colors flex items-center gap-2"><Mail size={16} /> Flyfoilformosa@gmail.com</a></li>
                 <li><a href="tel:+351961850859" className="hover:text-electric transition-colors flex items-center gap-2"><Phone size={16} /> +351 961 850 859</a></li>
               </ul>
@@ -1162,15 +1202,15 @@ export default function Landing() {
           
           <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-silver/50">
             <div className="flex flex-col items-center md:items-start gap-4">
-              <p>&copy; {new Date().getFullYear()} FLYFOILFORMOSA.COM. FlyFoil Formosa is operated in partnership with Altura Kite (RNAAT 981/2017).</p>
+              <p>&copy; {new Date().getFullYear()} {t('footer.copyright')}</p>
               <div className="flex items-center gap-6">
                 <img src="https://imgs.search.brave.com/8n-Fsh85cV8aawKfHyVf2rhcLGMSSihqf-rmdraypDI/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pLnBp/bmltZy5jb20vb3Jp/Z2luYWxzL2E2LzJk/LzY5L2E2MmQ2OTE1/M2U1NGY5NWFlNjE0/ODY3MjNjOTgyYTJh/LmpwZw" alt="Turismo de Portugal" className="h-12 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity" />
                 <img src="https://www.alturakites.com/assets/images/untitled-1-160x116.png" alt="Altura Kites" className={`h-12 w-auto object-contain transition-all ${isDarkMode ? 'opacity-70 hover:opacity-100 brightness-0 invert' : 'opacity-70 hover:opacity-100'}`} />
               </div>
             </div>
             <div className="flex gap-6">
-              <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
+              <a href="#" className="hover:text-white transition-colors">{t('footer.privacy')}</a>
+              <a href="#" className="hover:text-white transition-colors">{t('footer.terms')}</a>
             </div>
           </div>
         </div>
@@ -1195,19 +1235,19 @@ export default function Landing() {
             <line x1="18" y1="24" x2="18" y2="34" stroke="currentColor" strokeWidth="2.5"/>
             <path d="M12 34 L 28 34 Q 26 36 18 36 L 12 36 Z" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round"/>
           </svg>
-          <span className="text-[10px] font-bold tracking-widest uppercase">Home</span>
+          <span className="text-[10px] font-bold tracking-widest uppercase">{t('nav.home')}</span>
         </button>
         <button onClick={() => scrollTo('locations')} className="flex flex-col items-center gap-1 text-silver hover:text-electric transition-colors">
           <MapPin size={24} />
-          <span className="text-[10px] font-bold tracking-widest uppercase">Map</span>
+          <span className="text-[10px] font-bold tracking-widest uppercase">{t('nav.map')}</span>
         </button>
         <button onClick={() => scrollTo('booking')} className="flex flex-col items-center gap-1 text-silver hover:text-electric transition-colors">
           <Calendar size={24} />
-          <span className="text-[10px] font-bold tracking-widest uppercase">Book</span>
+          <span className="text-[10px] font-bold tracking-widest uppercase">{t('common.book')}</span>
         </button>
         <button onClick={() => navigate('/login')} className="flex flex-col items-center gap-1 text-silver hover:text-electric transition-colors">
           <User size={24} />
-          <span className="text-[10px] font-bold tracking-widest uppercase">Profile</span>
+          <span className="text-[10px] font-bold tracking-widest uppercase">{t('nav.profile')}</span>
         </button>
       </div>
 
@@ -1224,23 +1264,23 @@ export default function Landing() {
                 <X size={20} />
               </button>
               <h3 className="text-2xl font-display font-black mb-4 flex items-center gap-2 uppercase">
-                <FileSignature className="text-electric" /> Liability Waiver
+                <FileSignature className="text-electric" /> {t('waiver.title')}
               </h3>
               <div className="dashboard-card rounded-xl p-4 h-64 overflow-y-auto text-silver/80 text-sm mb-6 space-y-4">
-                <p className="font-bold text-white">RELEASE OF LIABILITY, WAIVER OF CLAIMS, EXPRESS ASSUMPTION OF RISK AND INDEMNITY AGREEMENT</p>
-                <p>Please read and be certain you understand the implications of signing.</p>
-                <p>1. I understand that eFoiling involves inherent risks, including but not limited to: falling into water, impact with the board or foil, marine life encounters, and varying weather/water conditions.</p>
-                <p>2. I agree to wear the provided personal flotation device (PFD) and helmet at all times while on the water.</p>
-                <p>3. I agree to follow all instructions provided by the instructor and acknowledge that failure to do so may result in the immediate termination of my session without refund.</p>
-                <p>4. I hereby release, waive, and discharge FlyFoil, its instructors, and affiliates from any and all liability, claims, demands, or causes of action arising out of any damage, loss, or injury to me or my property.</p>
-                <p>By clicking "Close", I acknowledge that I have read this document in its entirety and fully understand its terms.</p>
+                <p className="font-bold text-white">{t('waiver.p1')}</p>
+                <p>{t('waiver.p2')}</p>
+                <p>{t('waiver.p3')}</p>
+                <p>{t('waiver.p4')}</p>
+                <p>{t('waiver.p5')}</p>
+                <p>{t('waiver.p6')}</p>
+                <p>{t('waiver.p7')}</p>
               </div>
               <div className="flex justify-end">
                 <button 
                   onClick={() => setShowWaiverPopup(false)}
                   className="px-8 py-3 bg-electric text-navy font-bold rounded-xl text-sm hover:bg-electric/90 transition-colors"
                 >
-                  Close
+                  {t('waiver.close')}
                 </button>
               </div>
             </motion.div>

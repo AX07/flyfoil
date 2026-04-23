@@ -4,8 +4,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Phone, ArrowRight, Sun, Moon, AlertCircle } from 'lucide-react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
+import { useLanguage } from './LanguageContext';
 
 export default function Login() {
+  const { t } = useLanguage();
   const [method, setMethod] = useState<'email' | 'phone'>('email');
   const [inputValue, setInputValue] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +42,7 @@ export default function Login() {
       const querySnapshot = await getDocs(q);
       
       if (querySnapshot.empty) {
-        setError(`No reservation found with this ${method}.`);
+        setError(`${t('login.error')}${method === 'email' ? t('login.email').toLowerCase() : t('login.phone').toLowerCase()}.`);
         return;
       }
       
@@ -53,7 +55,7 @@ export default function Login() {
       
     } catch (err) {
       console.error("Error querying reservations:", err);
-      setError("An error occurred while looking up your reservation.");
+      setError(t('login.error2'));
     }
   };
 
@@ -70,7 +72,7 @@ export default function Login() {
             />
           </Link>
           <div className="flex items-center gap-6">
-            <div className="text-sm font-medium text-silver/80 hidden sm:block">Flight Deck Access</div>
+            <div className="text-sm font-medium text-silver/80 hidden sm:block">{t('login.title')}</div>
             <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 rounded-full hover:bg-white/10 transition-colors text-white" aria-label="Toggle theme">
               {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
@@ -91,8 +93,8 @@ export default function Login() {
           className="relative z-10 w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 md:p-10 shadow-2xl"
         >
           <div className="text-center mb-10">
-            <h1 className="text-3xl font-display font-black mb-3 tracking-tight uppercase">Access Flight Deck</h1>
-            <p className="text-silver/80 text-sm">Enter your booking email or phone number to access your Flight Deck.</p>
+            <h1 className="text-3xl font-display font-black mb-3 tracking-tight uppercase">{t('login.title')}</h1>
+            <p className="text-silver/80 text-sm">{t('login.subtitle')}</p>
           </div>
 
           <div className="flex p-1 bg-white/5 rounded-xl mb-8 border border-white/10">
@@ -100,13 +102,13 @@ export default function Login() {
                   onClick={() => { setMethod('email'); setInputValue(''); }}
                   className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${method === 'email' ? 'bg-white text-navy shadow-sm' : 'text-silver hover:text-white'}`}
                 >
-                  Email
+                  {t('login.email')}
                 </button>
                 <button 
                   onClick={() => { setMethod('phone'); setInputValue(''); }}
                   className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${method === 'phone' ? 'bg-white text-navy shadow-sm' : 'text-silver hover:text-white'}`}
                 >
-                  Phone Number
+                  {t('login.phone')}
                 </button>
               </div>
 
@@ -120,7 +122,7 @@ export default function Login() {
                 
                 <div className="space-y-2">
                   <label className="text-sm text-silver font-medium">
-                    {method === 'email' ? 'Email Address' : 'Phone Number'}
+                    {method === 'email' ? t('login.emailLabel') : t('login.phoneLabel')}
                   </label>
                   <div className="relative">
                     {method === 'email' ? (
@@ -130,7 +132,7 @@ export default function Login() {
                     )}
                     <input 
                       type={method === 'email' ? 'email' : 'tel'} 
-                      placeholder={method === 'email' ? 'john@example.com' : '+1 234 567 890'} 
+                      placeholder={method === 'email' ? t('login.placeholderEmail') : t('login.placeholderPhone')} 
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
                       className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-electric transition-colors" 
@@ -144,14 +146,14 @@ export default function Login() {
                     type="submit" 
                     className="btn-premium w-full text-sm flex items-center justify-center gap-2"
                   >
-                    LOG IN <ArrowRight size={18} />
+                    {t('login.submit')} <ArrowRight size={18} />
                   </button>
                   
                   <a 
                     href="/#booking"
                     className="w-full py-4 rounded-xl border border-white/10 text-white font-bold tracking-widest uppercase text-sm hover:bg-white/5 transition-colors flex items-center justify-center"
                   >
-                    BOOK A SESSION
+                    {t('login.book')}
                   </a>
                 </div>
               </form>

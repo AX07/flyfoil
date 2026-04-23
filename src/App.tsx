@@ -56,10 +56,14 @@ function AppContent() {
   );
 }
 
+import { LanguageProvider } from './LanguageContext';
+
 export default function App() {
   return (
     <BrowserRouter>
-      <AppContent />
+      <LanguageProvider>
+        <AppContent />
+      </LanguageProvider>
     </BrowserRouter>
   );
 }

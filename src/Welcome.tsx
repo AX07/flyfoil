@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useLanguage } from './LanguageContext';
 
 const createCustomIcon = (isActive: boolean) => L.divIcon({
   className: 'custom-leaflet-icon',
@@ -28,6 +29,7 @@ function MapUpdater({ center }: { center: [number, number] }) {
 }
 
 export default function Welcome() {
+  const { language, t } = useLanguage();
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
     return saved !== null ? saved === 'dark' : true;
@@ -99,7 +101,7 @@ export default function Welcome() {
             />
           </Link>
           <div className="flex items-center gap-6">
-            <div className="text-sm font-medium text-silver/80 hidden sm:block">Welcome</div>
+            <div className="text-sm font-medium text-silver/80 hidden sm:block">{language === 'en' ? 'Welcome' : 'Bem-vindo'}</div>
             <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 rounded-full hover:bg-white/10 transition-colors text-white" aria-label="Toggle theme">
               {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
@@ -116,15 +118,15 @@ export default function Welcome() {
             className="text-center mb-10"
           >
             <h1 className="text-3xl md:text-5xl font-display font-black mb-4 tracking-tighter uppercase leading-none">
-              Welcome to <span className="text-transparent bg-clip-text bg-gradient-to-r from-electric to-blue-400">FlyFoil Formosa</span>
+              {t('welcome.title')}
             </h1>
-            <p className="text-silver/90 text-lg font-light">Prepare for your flight by completing the steps below.</p>
+            <p className="text-silver/90 text-lg font-light">{t('welcome.subtitle')}</p>
           </motion.div>
         </section>
 
         <section>
           <h2 className="text-2xl font-display font-black mb-6 uppercase tracking-wider flex items-center gap-3">
-            <span className="w-8 h-px bg-electric"></span> Locations
+            <span className="w-8 h-px bg-electric"></span> {t('nav.locations')}
           </h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="space-y-4">
@@ -207,14 +209,14 @@ export default function Welcome() {
 
         <section>
           <h2 className="text-2xl font-display font-black mb-6 uppercase tracking-wider flex items-center gap-3">
-            <span className="w-8 h-px bg-electric"></span> Gear & Profile
+            <span className="w-8 h-px bg-electric"></span> {t('dashboard.gear', 'Gear & Profile')}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="dashboard-card rounded-2xl p-6 flex flex-col justify-between">
               <div>
                 <Shirt className="text-silver mb-4" size={28} />
-                <h3 className="font-display font-bold text-white mb-1 uppercase tracking-wider">Wetsuit Match</h3>
-                <p className="text-sm text-silver/80 mb-3">Select your size</p>
+                <h3 className="font-display font-bold text-white mb-1 uppercase tracking-wider">{t('check.wetsuit')}</h3>
+                <p className="text-sm text-silver/80 mb-3">{t('check.wetsuitSelect', 'Select your size')}</p>
               </div>
               <div className="relative">
                 <select 
@@ -237,8 +239,8 @@ export default function Welcome() {
             <div className="dashboard-card rounded-2xl p-6 flex flex-col justify-between">
               <div>
                 <HeartPulse className="text-silver mb-4" size={28} />
-                <h3 className="font-display font-bold text-white mb-1 uppercase tracking-wider">Physical Condition</h3>
-                <p className="text-sm text-silver/80 mb-3">Health check required</p>
+                <h3 className="font-display font-bold text-white mb-1 uppercase tracking-wider">{t('check.physical')}</h3>
+                <p className="text-sm text-silver/80 mb-3">{t('check.healthReq', 'Health check required')}</p>
               </div>
               <button 
                 onClick={() => setShowHealthPopup(true)}
@@ -255,8 +257,8 @@ export default function Welcome() {
             <div className="dashboard-card rounded-2xl p-6 flex flex-col justify-between">
               <div>
                 <FileSignature className="text-silver mb-4" size={28} />
-                <h3 className="font-display font-bold text-white mb-1 uppercase tracking-wider">Waiver Status</h3>
-                <p className="text-sm text-silver/80 mb-4">Digital liability form</p>
+                <h3 className="font-display font-bold text-white mb-1 uppercase tracking-wider">{t('check.waiver')}</h3>
+                <p className="text-sm text-silver/80 mb-4">{t('check.digitalForm', 'Digital liability form')}</p>
               </div>
               <button 
                 onClick={() => setShowWaiverPopup(true)}
@@ -273,8 +275,8 @@ export default function Welcome() {
             <div className="dashboard-card rounded-2xl p-6 flex flex-col justify-between">
               <div>
                 <Compass className="text-silver mb-4" size={28} />
-                <h3 className="font-display font-bold text-white mb-1 uppercase tracking-wider">Experience Level</h3>
-                <p className="text-sm text-silver/80 mb-4">Help us tailor your session</p>
+                <h3 className="font-display font-bold text-white mb-1 uppercase tracking-wider">{t('check.experience')}</h3>
+                <p className="text-sm text-silver/80 mb-4">{t('check.tailorDesc', 'Help us tailor your session')}</p>
               </div>
               <button 
                 onClick={() => setShowExperiencePopup(true)}
@@ -292,7 +294,7 @@ export default function Welcome() {
 
         <section>
           <h2 className="text-2xl font-display font-black mb-6 uppercase tracking-wider flex items-center gap-3">
-            <span className="w-8 h-px bg-electric"></span> Flight School
+            <span className="w-8 h-px bg-electric"></span> {t('flightSchool.title')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="rounded-2xl overflow-hidden border border-white/10 bg-navy-light relative aspect-video">
@@ -306,8 +308,8 @@ export default function Welcome() {
               ></iframe>
             </div>
             <div className="flex flex-col justify-center">
-              <h3 className="text-xl font-display font-bold text-white mb-4 uppercase tracking-wider">Safety Briefing Checklist</h3>
-              <p className="text-silver/80 text-sm mb-6">Please review the video and check off the following before you arrive.</p>
+              <h3 className="text-xl font-display font-bold text-white mb-4 uppercase tracking-wider">{t('flightSchool.briefing')}</h3>
+              <p className="text-silver/80 text-sm mb-6">{t('flightSchool.briefingDesc', 'Please review the video and check off the following before you arrive.')}</p>
               
               <div className="space-y-3">
                 <label className="flex items-start gap-3 cursor-pointer group p-3 rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/10">

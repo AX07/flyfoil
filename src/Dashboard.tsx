@@ -4,17 +4,19 @@ import {
   Clock, Wind, Thermometer, MapPin, 
   Shirt, HeartPulse, FileSignature, 
   CheckCircle, Video, DownloadCloud, ChevronRight, Check,
-  Sun, Moon, Waves, X, Compass
+  Sun, Moon, Waves, X, Compass, Globe
 } from 'lucide-react';
 import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import NotFound from './NotFound';
+import { useLanguage } from './LanguageContext';
 
 export default function Dashboard() {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { t, language, setLanguage } = useLanguage();
   const [bookingData, setBookingData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -90,66 +92,18 @@ export default function Dashboard() {
     return saved !== null ? saved === 'dark' : true;
   });
   const [wetsuitSize, setWetsuitSize] = useState("None");
-  
-  const [isLoadingWeather, setIsLoadingWeather] = useState(true);
-  const [weatherData, setWeatherData] = useState({
-    windSpeed: '--',
-    waterTemp: '--',
-    tideStatus: '--',
-    tideTime: '--'
-  });
-
-  useEffect(() => {
-    if (!bookingData?.date || !bookingData?.location) return;
-    
-    async function fetchConditions() {
-      setIsLoadingWeather(true);
-      try {
-        const queryParams = new URLSearchParams({
-          date: bookingData.date,
-          location: bookingData.location
-        });
-        const response = await fetch(`/api/weather?${queryParams}`);
-        if (response.ok) {
-          const data = await response.json();
-          setWeatherData(data);
-        } else {
-          console.error("Failed to fetch weather data from backend");
-        }
-      } catch (error) {
-        console.error("Failed to fetch weather data:", error);
-      } finally {
-        setIsLoadingWeather(false);
-      }
-    }
-    
-    fetchConditions();
-  }, [bookingData?.date, bookingData?.location]);
-  
-  const [healthStatus, setHealthStatus] = useState<'pending' | 'fit'>('pending');
+  const [healthStatus, setHealthStatus] = useState<string | null>(null);
   const [showHealthPopup, setShowHealthPopup] = useState(false);
-  
-  const [waiverStatus, setWaiverStatus] = useState<'pending' | 'signed'>('pending');
+  const [waiverStatus, setWaiverStatus] = useState<string | null>(null);
   const [showWaiverPopup, setShowWaiverPopup] = useState(false);
-
   const [experienceLevel, setExperienceLevel] = useState<string | null>(null);
   const [showExperiencePopup, setShowExperiencePopup] = useState(false);
-
   const [safetyChecks, setSafetyChecks] = useState({
     signals: false,
     falling: false,
-    equipment: false
+    equipment: false,
   });
-
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.remove('light-mode');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.add('light-mode');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [isDarkMode]);
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
 
   // Mock countdown effect
   useEffect(() => {
@@ -205,7 +159,7 @@ export default function Dashboard() {
       <div className="min-h-screen bg-navy text-white flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-electric/30 border-t-electric rounded-full animate-spin mx-auto mb-6"></div>
-          <h2 className="text-2xl font-display font-black uppercase tracking-wider">Loading Flight Deck...</h2>
+          <h2 className="text-2xl font-display font-black uppercase tracking-wider">{t('dashboard.loading')}</h2>
         </div>
       </div>
     );
@@ -241,7 +195,7 @@ export default function Dashboard() {
             />
           </Link>
           <div className="flex items-center gap-6">
-            <div className="text-sm font-medium text-silver/80 hidden sm:block">Flight Deck</div>
+            <div className="text-sm font-medium text-silver/80 hidden sm:block">{t('dashboard.title')}</div>
             <button 
               onClick={() => {
                 localStorage.removeItem('auth_reservation');
@@ -249,8 +203,33 @@ export default function Dashboard() {
               }}
               className="text-sm font-medium text-silver hover:text-white transition-colors border border-white/10 rounded-lg px-3 py-1.5 hover:bg-white/5"
             >
-              Sign Out
+              {t('dashboard.signOut')}
             </button>
+            <div className="relative">
+              <button 
+                onClick={() => setIsLangMenuOpen(!isLangMenuOpen)} 
+                className="p-2 rounded-full hover:bg-white/10 transition-colors text-white flex items-center justify-center" 
+                aria-label="Change language"
+              >
+                <Globe size={20} />
+              </button>
+              {isLangMenuOpen && (
+                <div className="absolute right-0 mt-2 w-32 bg-navy/90 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden shadow-2xl flex flex-col py-2 z-[60]">
+                  <button 
+                    onClick={() => { setLanguage('en'); setIsLangMenuOpen(false); }}
+                    className={`px-4 py-2 text-sm text-left hover:bg-white/10 transition-colors ${language === 'en' ? 'text-electric font-bold' : 'text-white'}`}
+                  >
+                    English
+                  </button>
+                  <button 
+                    onClick={() => { setLanguage('pt'); setIsLangMenuOpen(false); }}
+                    className={`px-4 py-2 text-sm text-left hover:bg-white/10 transition-colors ${language === 'pt' ? 'text-electric font-bold' : 'text-white'}`}
+                  >
+                    Português
+                  </button>
+                </div>
+              )}
+            </div>
             <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 rounded-full hover:bg-white/10 transition-colors text-white" aria-label="Toggle theme">
               {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
@@ -268,85 +247,22 @@ export default function Dashboard() {
             className="text-center mb-10"
           >
             <h1 className="text-3xl md:text-5xl font-display font-black mb-4 tracking-tighter uppercase leading-none">
-              Thanks for reserving, <span className="text-transparent bg-clip-text bg-gradient-to-r from-electric to-blue-400">{bookingData?.fullName?.split(' ')[0] || 'Alex'}</span>
+              {t('dashboard.thanks')}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-electric to-blue-400">{bookingData?.fullName?.split(' ')[0] || 'Alex'}</span>
             </h1>
             
             <div className="mt-8 dashboard-card rounded-2xl p-8 max-w-md mx-auto backdrop-blur-md">
-              <p className="text-silver/90 text-lg font-light uppercase tracking-widest mb-2">Your flight status</p>
-              <div className="text-5xl md:text-7xl font-mono font-bold text-white tracking-tight">
+              <p className="text-silver/90 text-lg font-light uppercase tracking-widest mb-2">{t('dashboard.statusLine')}</p>
+              <div className="text-5xl md:text-7xl font-mono font-bold text-white tracking-tight mb-2">
                 {timeLeft}
+              </div>
+              <div className="text-sm text-silver/60 uppercase tracking-widest mt-2 border-t border-white/10 pt-4">
+                {bookingData?.date || ''} {bookingData?.sessionTime ? `(${bookingData.sessionTime === 'morning' ? t('booking.morning') : bookingData.sessionTime === 'evening' ? t('booking.evening') : bookingData.sessionTime})` : ''}
               </div>
             </div>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Weather Widget */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="dashboard-card rounded-2xl p-6 flex flex-col justify-between"
-            >
-              <div className="flex items-center gap-3 mb-4 text-silver">
-                <Wind className="text-electric" size={24} />
-                <span className="font-medium uppercase tracking-wider text-sm">Wind Speed</span>
-              </div>
-              <div>
-                {isLoadingWeather ? (
-                  <div className="h-9 w-24 bg-white/10 animate-pulse rounded mb-1"></div>
-                ) : (
-                  <div className="text-3xl font-bold text-white">{weatherData.windSpeed} <span className="text-lg text-silver/60 font-normal">knots</span></div>
-                )}
-                <div className="text-sm text-emerald-400 mt-1">Optimal for eFoiling</div>
-              </div>
-            </motion.div>
-
-            {/* Water Temp Widget */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="dashboard-card rounded-2xl p-6 flex flex-col justify-between"
-            >
-              <div className="flex items-center gap-3 mb-4 text-silver">
-                <Thermometer className="text-electric" size={24} />
-                <span className="font-medium uppercase tracking-wider text-sm">Water Temp</span>
-              </div>
-              <div>
-                {isLoadingWeather ? (
-                  <div className="h-9 w-24 bg-white/10 animate-pulse rounded mb-1"></div>
-                ) : (
-                  <div className="text-3xl font-bold text-white">{weatherData.waterTemp}°<span className="text-lg text-silver/60 font-normal">C</span></div>
-                )}
-                <div className="text-sm text-silver/80 mt-1">Comfortable</div>
-              </div>
-            </motion.div>
-
-            {/* Tide Status Widget */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              className="dashboard-card rounded-2xl p-6 flex flex-col justify-between"
-            >
-              <div className="flex items-center gap-3 mb-4 text-silver">
-                <Waves className="text-electric" size={24} />
-                <span className="font-medium uppercase tracking-wider text-sm">Tide Status</span>
-              </div>
-              <div>
-                {isLoadingWeather ? (
-                  <div className="h-9 w-24 bg-white/10 animate-pulse rounded mb-1"></div>
-                ) : (
-                  <div className="text-3xl font-bold text-white">{weatherData.tideStatus}</div>
-                )}
-                {isLoadingWeather ? (
-                  <div className="h-5 w-32 bg-white/10 animate-pulse rounded mt-1"></div>
-                ) : (
-                  <div className="text-sm text-silver/80 mt-1">{weatherData.tideTime}</div>
-                )}
-              </div>
-            </motion.div>
-
+          {/* Location details */}
+          <div className="max-w-xl mx-auto">
             {/* Launch Spot Pin */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -358,7 +274,7 @@ export default function Dashboard() {
               <div className="relative z-10">
                 <div className="flex items-center gap-3 mb-4 text-white">
                   <MapPin className="text-[#D4AF37]" size={24} />
-                  <span className="font-medium uppercase tracking-wider text-sm">Launch Spot</span>
+                  <span className="font-medium uppercase tracking-wider text-sm">{t('dashboard.launchSpot')}</span>
                 </div>
                 <div className="text-lg font-bold text-white mb-4">{bookingData.location || 'Cabanas de Tavira'}</div>
                 <a 
@@ -374,7 +290,7 @@ export default function Dashboard() {
                   rel="noopener noreferrer" 
                   className="w-full py-3 bg-white text-navy font-bold rounded-xl text-sm hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
                 >
-                  OPEN IN MAPS <ChevronRight size={16} />
+                  {t('dashboard.openMaps')} <ChevronRight size={16} />
                 </a>
               </div>
             </motion.div>
@@ -385,32 +301,32 @@ export default function Dashboard() {
         {bookingData && (
           <section>
             <h2 className="text-2xl font-display font-black mb-6 uppercase tracking-wider flex items-center gap-3">
-              <span className="w-8 h-px bg-electric"></span> Booking Details
+              <span className="w-8 h-px bg-electric"></span> {t('dashboard.bookingDetails')}
             </h2>
             <div className="dashboard-card rounded-2xl p-6 md:p-8">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
-                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">Full Name</p>
+                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">{t('dashboard.name')}</p>
                   <p className="text-lg font-medium text-white">{bookingData.fullName || 'N/A'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">Email</p>
+                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">{t('dashboard.email')}</p>
                   <p className="text-lg font-medium text-white">{bookingData.email || 'N/A'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">Phone</p>
+                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">{t('dashboard.phone')}</p>
                   <p className="text-lg font-medium text-white">{bookingData.phone || 'N/A'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">Date & Time</p>
+                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">{t('dashboard.dateTime')}</p>
                   <p className="text-lg font-medium text-white">{bookingData.date || 'N/A'} <span className="capitalize">{bookingData.sessionTime ? `(${bookingData.sessionTime})` : ''}</span></p>
                 </div>
                 <div>
-                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">Location</p>
+                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">{t('dashboard.location')}</p>
                   <p className="text-lg font-medium text-white">{bookingData.location || 'N/A'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">Experience</p>
+                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">{t('dashboard.experience')}</p>
                   <p className="text-lg font-medium text-white">{bookingData.experience || 'N/A'}</p>
                 </div>
               </div>
@@ -421,14 +337,14 @@ export default function Dashboard() {
         {/* 2. Gear & Profile Management */}
         <section>
           <h2 className="text-2xl font-display font-black mb-6 uppercase tracking-wider flex items-center gap-3">
-            <span className="w-8 h-px bg-electric"></span> Gear & Profile
+            <span className="w-8 h-px bg-electric"></span> {t('dashboard.gearProfile')}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="dashboard-card rounded-2xl p-6 flex flex-col justify-between">
               <div>
                 <Shirt className="text-silver mb-4" size={28} />
-                <h3 className="font-display font-bold text-white mb-1 uppercase tracking-wider">Wetsuit Match</h3>
-                <p className="text-sm text-silver/80 mb-3">Select your size (Please request 24h in advance)</p>
+                <h3 className="font-display font-bold text-white mb-1 uppercase tracking-wider">{t('check.wetsuit')}</h3>
+                <p className="text-sm text-silver/80 mb-3">{t('dashboard.wetsuitReq')}</p>
               </div>
               <div className="relative">
                 <select 
@@ -436,13 +352,13 @@ export default function Dashboard() {
                   onChange={(e) => updateReservation('wetsuitSize', e.target.value)}
                   className="w-full bg-navy border border-white/20 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-electric appearance-none cursor-pointer"
                 >
-                  <option value="None">No Wetsuit</option>
-                  <option value="XS">Size XS</option>
-                  <option value="S">Size S</option>
-                  <option value="M">Size M</option>
-                  <option value="L">Size L</option>
-                  <option value="XL">Size XL</option>
-                  <option value="XXL">Size XXL</option>
+                  <option value="None">{t('dashboard.noWetsuit')}</option>
+                  <option value="XS">{t('dashboard.size')} XS</option>
+                  <option value="S">{t('dashboard.size')} S</option>
+                  <option value="M">{t('dashboard.size')} M</option>
+                  <option value="L">{t('dashboard.size')} L</option>
+                  <option value="XL">{t('dashboard.size')} XL</option>
+                  <option value="XXL">{t('dashboard.size')} XXL</option>
                 </select>
                 <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-silver pointer-events-none rotate-90" size={16} />
               </div>
@@ -451,8 +367,8 @@ export default function Dashboard() {
             <div className="dashboard-card rounded-2xl p-6 flex flex-col justify-between">
               <div>
                 <HeartPulse className="text-silver mb-4" size={28} />
-                <h3 className="font-display font-bold text-white mb-1 uppercase tracking-wider">Physical Condition</h3>
-                <p className="text-sm text-silver/80 mb-3">Health check required</p>
+                <h3 className="font-display font-bold text-white mb-1 uppercase tracking-wider">{t('check.physical')}</h3>
+                <p className="text-sm text-silver/80 mb-3">{t('check.healthReq')}</p>
               </div>
               <button 
                 onClick={() => setShowHealthPopup(true)}
@@ -462,15 +378,15 @@ export default function Dashboard() {
                     : 'bg-white/10 text-white border border-white/20 hover:bg-white/20'
                 }`}
               >
-                {healthStatus === 'fit' ? <><CheckCircle size={16} /> Green Light</> : 'Complete Check'}
+                {healthStatus === 'fit' ? <><CheckCircle size={16} /> {t('check.greenLight')}</> : t('check.completeCheck')}
               </button>
             </div>
 
             <div className="dashboard-card rounded-2xl p-6 flex flex-col justify-between">
               <div>
                 <FileSignature className="text-silver mb-4" size={28} />
-                <h3 className="font-display font-bold text-white mb-1 uppercase tracking-wider">Waiver Status</h3>
-                <p className="text-sm text-silver/80 mb-4">Digital liability form</p>
+                <h3 className="font-display font-bold text-white mb-1 uppercase tracking-wider">{t('check.waiver')}</h3>
+                <p className="text-sm text-silver/80 mb-4">{t('check.waiverDesc')}</p>
               </div>
               <button 
                 onClick={() => setShowWaiverPopup(true)}
@@ -480,15 +396,15 @@ export default function Dashboard() {
                     : 'bg-white/10 text-white border border-white/20 hover:bg-white/20'
                 }`}
               >
-                {waiverStatus === 'signed' ? <><Check size={18} /> SIGNED</> : 'Review & Sign'}
+                {waiverStatus === 'signed' ? <><Check size={18} /> {t('check.signed')}</> : t('check.reviewSign')}
               </button>
             </div>
 
             <div className="dashboard-card rounded-2xl p-6 flex flex-col justify-between">
               <div>
                 <Compass className="text-silver mb-4" size={28} />
-                <h3 className="font-display font-bold text-white mb-1 uppercase tracking-wider">Experience Level</h3>
-                <p className="text-sm text-silver/80 mb-4">Help us tailor your session</p>
+                <h3 className="font-display font-bold text-white mb-1 uppercase tracking-wider">{t('check.experience')}</h3>
+                <p className="text-sm text-silver/80 mb-4">{t('check.experienceDesc')}</p>
               </div>
               <button 
                 onClick={() => setShowExperiencePopup(true)}
@@ -498,7 +414,7 @@ export default function Dashboard() {
                     : 'bg-white/10 text-white border border-white/20 hover:bg-white/20'
                 }`}
               >
-                {experienceLevel ? <><Check size={18} /> LOGGED</> : 'Set Experience'}
+                {experienceLevel ? <><Check size={18} /> {t('check.logged')}</> : t('check.setExperience')}
               </button>
             </div>
           </div>
@@ -507,7 +423,7 @@ export default function Dashboard() {
         {/* 3. The "Flight School" (Educational) */}
         <section>
           <h2 className="text-2xl font-display font-black mb-6 uppercase tracking-wider flex items-center gap-3">
-            <span className="w-8 h-px bg-electric"></span> Flight School
+            <span className="w-8 h-px bg-electric"></span> {t('dashboard.flightSchool')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="rounded-2xl overflow-hidden border border-white/10 bg-navy-light relative aspect-video">
@@ -521,8 +437,8 @@ export default function Dashboard() {
               ></iframe>
             </div>
             <div className="flex flex-col justify-center">
-              <h3 className="text-xl font-display font-bold text-white mb-4 uppercase tracking-wider">Safety Briefing Checklist</h3>
-              <p className="text-silver/80 text-sm mb-6">Please review the video and check off the following before you arrive.</p>
+              <h3 className="text-xl font-display font-bold text-white mb-4 uppercase tracking-wider">{t('dashboard.checklistTitle')}</h3>
+              <p className="text-silver/80 text-sm mb-6">{t('dashboard.checklistDesc')}</p>
               
               <div className="space-y-3">
                 <label className="flex items-start gap-3 cursor-pointer group p-3 rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/10">
@@ -533,7 +449,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <span className={`text-sm transition-colors ${safetyChecks.signals ? 'text-white' : 'text-silver/80'}`}>
-                    I understand that I have to stay clear of swimmers or any obstacle in a 100m distance.
+                    {t('check.q1')}
                   </span>
                 </label>
 
@@ -545,7 +461,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <span className={`text-sm transition-colors ${safetyChecks.falling ? 'text-white' : 'text-silver/80'}`}>
-                    I know how to fall safely (away from the board and foil).
+                    {t('check.q2')}
                   </span>
                 </label>
 
@@ -557,7 +473,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <span className={`text-sm transition-colors ${safetyChecks.equipment ? 'text-white' : 'text-silver/80'}`}>
-                    I understand how to release the throttle immediately if I lose balance.
+                    {t('check.q3')}
                   </span>
                 </label>
               </div>
@@ -568,7 +484,7 @@ export default function Dashboard() {
         {/* 4. The "After-Flight" Gallery */}
         <section className="pb-12">
           <h2 className="text-2xl font-display font-black mb-6 uppercase tracking-wider flex items-center gap-3">
-            <span className="w-8 h-px bg-electric"></span> After-Flight Gallery
+            <span className="w-8 h-px bg-electric"></span> {t('dashboard.gallery')}
           </h2>
           <div className="relative rounded-2xl overflow-hidden">
             <div className="dashboard-card p-8 flex flex-col md:flex-row items-center justify-between gap-6 blur-sm opacity-50 pointer-events-none">
@@ -577,18 +493,18 @@ export default function Dashboard() {
                   <DownloadCloud className="text-white" size={32} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-display font-bold text-white mb-1 uppercase tracking-wider">Cloud Folder: Your Session Media</h3>
-                  <p className="text-silver/80 text-sm">Return here after your flight to find the link to your GoPro footage and drone shots.</p>
+                  <h3 className="text-xl font-display font-bold text-white mb-1 uppercase tracking-wider">{t('dashboard.mediaTitle')}</h3>
+                  <p className="text-silver/80 text-sm">{t('dashboard.mediaDesc')}</p>
                 </div>
               </div>
               <button className="w-full md:w-auto px-8 py-3 bg-white/10 text-white/50 border border-white/20 font-bold rounded-xl text-sm cursor-not-allowed flex items-center justify-center gap-2 shrink-0">
-                AVAILABLE POST-FLIGHT
+                {t('dashboard.availPost')}
               </button>
             </div>
             
             <div className="absolute inset-0 flex items-center justify-center z-10">
               <div className="bg-navy/80 backdrop-blur-md border border-white/20 px-8 py-4 rounded-full shadow-2xl">
-                <span className="text-white font-display font-bold uppercase tracking-widest text-lg">Coming Soon</span>
+                <span className="text-white font-display font-bold uppercase tracking-widest text-lg">{t('common.comingSoon')}</span>
               </div>
             </div>
           </div>
@@ -610,16 +526,16 @@ export default function Dashboard() {
                 <X size={20} />
               </button>
               <h3 className="text-2xl font-display font-black mb-4 flex items-center gap-2 uppercase">
-                <HeartPulse className="text-electric" /> Health Declaration
+                <HeartPulse className="text-electric" /> {t('health.title')}
               </h3>
               <div className="space-y-4 text-silver/90 text-sm mb-6">
-                <p>To ensure your safety during the eFoil experience, please confirm the following:</p>
+                <p>{t('health.desc')}</p>
                 <ul className="list-disc pl-5 space-y-2">
-                  <li>I do not have any severe heart conditions or cardiovascular issues.</li>
-                  <li>I am not currently pregnant.</li>
-                  <li>I do not have any back, neck, or joint injuries that could be aggravated by falling into water.</li>
-                  <li>I am a capable swimmer and comfortable in open water.</li>
-                  <li>I am not under the influence of alcohol or drugs.</li>
+                  <li>{t('health.q1')}</li>
+                  <li>{t('health.q2')}</li>
+                  <li>{t('health.q3')}</li>
+                  <li>{t('health.q4')}</li>
+                  <li>{t('health.q5')}</li>
                 </ul>
               </div>
               <div className="flex gap-3">
@@ -627,7 +543,7 @@ export default function Dashboard() {
                   onClick={() => setShowHealthPopup(false)}
                   className="flex-1 py-3 dashboard-card text-white font-bold rounded-xl text-sm hover:bg-white/10 transition-colors"
                 >
-                  Cancel
+                  {t('health.cancel')}
                 </button>
                 <button 
                   onClick={() => {
@@ -636,7 +552,7 @@ export default function Dashboard() {
                   }}
                   className="flex-1 py-3 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 font-bold rounded-xl text-sm hover:bg-emerald-500/30 transition-colors"
                 >
-                  I Confirm I am Fit
+                  {t('health.confirm')}
                 </button>
               </div>
             </motion.div>
@@ -655,23 +571,23 @@ export default function Dashboard() {
                 <X size={20} />
               </button>
               <h3 className="text-2xl font-display font-black mb-4 flex items-center gap-2 uppercase">
-                <FileSignature className="text-electric" /> Liability Waiver
+                <FileSignature className="text-electric" /> {t('waiver.title')}
               </h3>
               <div className="dashboard-card rounded-xl p-4 h-64 overflow-y-auto text-silver/80 text-sm mb-6 space-y-4">
-                <p className="font-bold text-white">RELEASE OF LIABILITY, WAIVER OF CLAIMS, EXPRESS ASSUMPTION OF RISK AND INDEMNITY AGREEMENT</p>
-                <p>Please read and be certain you understand the implications of signing.</p>
-                <p>1. I understand that eFoiling involves inherent risks, including but not limited to: falling into water, impact with the board or foil, marine life encounters, and varying weather/water conditions.</p>
-                <p>2. I agree to wear the provided personal flotation device (PFD) and helmet at all times while on the water.</p>
-                <p>3. I agree to follow all instructions provided by the instructor and acknowledge that failure to do so may result in the immediate termination of my session without refund.</p>
-                <p>4. I hereby release, waive, and discharge FlyFoil, its instructors, and affiliates from any and all liability, claims, demands, or causes of action arising out of any damage, loss, or injury to me or my property.</p>
-                <p>By clicking "I Agree & Sign", I acknowledge that I have read this document in its entirety and fully understand its terms.</p>
+                <p className="font-bold text-white">{t('waiver.p1')}</p>
+                <p>{t('waiver.p2')}</p>
+                <p>{t('waiver.p3')}</p>
+                <p>{t('waiver.p4')}</p>
+                <p>{t('waiver.p5')}</p>
+                <p>{t('waiver.p6')}</p>
+                <p>{t('waiver.p7Confirm')}</p>
               </div>
               <div className="flex gap-3">
                 <button 
                   onClick={() => setShowWaiverPopup(false)}
                   className="flex-1 py-3 dashboard-card text-white font-bold rounded-xl text-sm hover:bg-white/10 transition-colors"
                 >
-                  Cancel
+                  {t('health.cancel')}
                 </button>
                 <button 
                   onClick={() => {
@@ -680,7 +596,7 @@ export default function Dashboard() {
                   }}
                   className="flex-1 py-3 bg-electric text-navy font-bold rounded-xl text-sm hover:bg-electric/90 transition-colors"
                 >
-                  I Agree & Sign
+                  {t('waiver.agreeSign')}
                 </button>
               </div>
             </motion.div>
@@ -699,17 +615,17 @@ export default function Dashboard() {
                 <X size={20} />
               </button>
               <h3 className="text-2xl font-display font-black mb-4 flex items-center gap-2 uppercase">
-                <Compass className="text-electric" /> Experience Level
+                <Compass className="text-electric" /> {t('expModal.title')}
               </h3>
               <div className="space-y-4 text-silver/90 text-sm mb-6">
-                <p>Have you ever surfed, foiled, or used an eFoil before? Select the option that best describes your experience.</p>
+                <p>{t('expModal.desc')}</p>
                 
                 <div className="space-y-3 mt-4">
                   {[
-                    { id: 'never', label: 'Never - Complete Beginner' },
-                    { id: 'surfed', label: 'I have surfed or wakeboarded' },
-                    { id: 'foiled', label: 'I have foiled (kite/wing/surf)' },
-                    { id: 'efoiled', label: 'I have used an eFoil before' }
+                    { id: 'never', label: t('expModal.opt1') },
+                    { id: 'surfed', label: t('expModal.opt2') },
+                    { id: 'foiled', label: t('expModal.opt3') },
+                    { id: 'efoiled', label: t('expModal.opt4') }
                   ].map((option) => (
                     <button
                       key={option.id}
@@ -731,7 +647,7 @@ export default function Dashboard() {
                   onClick={() => setShowExperiencePopup(false)}
                   className="flex-1 py-3 dashboard-card text-white font-bold rounded-xl text-sm hover:bg-white/10 transition-colors"
                 >
-                  Cancel
+                  {t('health.cancel')}
                 </button>
                 <button 
                   onClick={() => {
@@ -747,7 +663,7 @@ export default function Dashboard() {
                       : 'bg-white/10 text-white/50 cursor-not-allowed'
                   }`}
                 >
-                  Save Experience
+                  {t('expModal.save')}
                 </button>
               </div>
             </motion.div>
