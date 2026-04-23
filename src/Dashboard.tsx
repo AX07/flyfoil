@@ -56,7 +56,7 @@ export default function Dashboard() {
         setWetsuitSize(data.wetsuitSize || 'None');
         setHealthStatus(data.healthStatus || 'pending');
         setWaiverStatus(data.waiverStatus || 'pending');
-        setExperienceLevel(data.experience || null);
+        setExperienceLevel(data.riderExperience || null);
         setSafetyChecks({
           signals: data.flightSchool || false,
           falling: data.flightSchool || false,
@@ -297,43 +297,6 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* 1.5 Booking Details */}
-        {bookingData && (
-          <section>
-            <h2 className="text-2xl font-display font-black mb-6 uppercase tracking-wider flex items-center gap-3">
-              <span className="w-8 h-px bg-electric"></span> {t('dashboard.bookingDetails')}
-            </h2>
-            <div className="dashboard-card rounded-2xl p-6 md:p-8">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div>
-                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">{t('dashboard.name')}</p>
-                  <p className="text-lg font-medium text-white">{bookingData.fullName || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">{t('dashboard.email')}</p>
-                  <p className="text-lg font-medium text-white">{bookingData.email || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">{t('dashboard.phone')}</p>
-                  <p className="text-lg font-medium text-white">{bookingData.phone || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">{t('dashboard.dateTime')}</p>
-                  <p className="text-lg font-medium text-white">{bookingData.date || 'N/A'} <span className="capitalize">{bookingData.sessionTime ? `(${bookingData.sessionTime})` : ''}</span></p>
-                </div>
-                <div>
-                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">{t('dashboard.location')}</p>
-                  <p className="text-lg font-medium text-white">{bookingData.location || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">{t('dashboard.experience')}</p>
-                  <p className="text-lg font-medium text-white">{bookingData.experience || 'N/A'}</p>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
-
         {/* 2. Gear & Profile Management */}
         <section>
           <h2 className="text-2xl font-display font-black mb-6 uppercase tracking-wider flex items-center gap-3">
@@ -480,6 +443,43 @@ export default function Dashboard() {
             </div>
           </div>
         </section>
+
+        {/* 1.5 Booking Details */}
+        {bookingData && (
+          <section>
+            <h2 className="text-2xl font-display font-black mb-6 uppercase tracking-wider flex items-center gap-3">
+              <span className="w-8 h-px bg-electric"></span> {t('dashboard.bookingDetails')}
+            </h2>
+            <div className="dashboard-card rounded-2xl p-6 md:p-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">{t('dashboard.name')}</p>
+                  <p className="text-lg font-medium text-white">{bookingData.fullName || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">{t('dashboard.email')}</p>
+                  <p className="text-lg font-medium text-white">{bookingData.email || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">{t('dashboard.phone')}</p>
+                  <p className="text-lg font-medium text-white">{bookingData.phone || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">{t('dashboard.dateTime')}</p>
+                  <p className="text-lg font-medium text-white">{bookingData.date || 'N/A'} <span className="capitalize">{bookingData.sessionTime ? `(${bookingData.sessionTime})` : ''}</span></p>
+                </div>
+                <div>
+                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">{t('dashboard.location')}</p>
+                  <p className="text-lg font-medium text-white">{bookingData.location || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">{t('dashboard.experience')}</p>
+                  <p className="text-lg font-medium text-white">{bookingData.experience || 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* 4. The "After-Flight" Gallery */}
         <section className="pb-12">
@@ -652,7 +652,7 @@ export default function Dashboard() {
                 <button 
                   onClick={() => {
                     if (experienceLevel) {
-                      updateReservation('experience', experienceLevel);
+                      updateReservation('riderExperience', experienceLevel);
                     }
                     setShowExperiencePopup(false);
                   }}
