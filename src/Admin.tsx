@@ -9,10 +9,13 @@ import { Link } from 'react-router-dom';
 import { collection, onSnapshot, query, orderBy, doc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, signInWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from './firebase';
+import { DayPicker } from 'react-day-picker';
+import 'react-day-picker/dist/style.css';
+import { format, parseISO, isSameDay } from 'date-fns';
 
 export default function Admin() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterDate, setFilterDate] = useState('all');
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [reservations, setReservations] = useState<any[]>([]);
   const [schedule, setSchedule] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
@@ -365,8 +368,13 @@ export default function Admin() {
                           res.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           res.id.toLowerCase().includes(searchTerm.toLowerCase());
     
-    if (filterDate === 'all') return matchesSearch;
-    return matchesSearch && res.date === filterDate;
+    if (!selectedDate) return matchesSearch;
+    try {
+      const resDate = parseISO(res.date);
+      return matchesSearch && isSameDay(resDate, selectedDate);
+    } catch {
+      return matchesSearch;
+    }
   });
 
   const StatusBadge = ({ status, type }: { status: string | boolean, type: 'health' | 'waiver' | 'school' }) => {
@@ -519,47 +527,91 @@ export default function Admin() {
           </div>
         </div>
 
-        {/* Controls */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6 items-center justify-between">
-          <div className="relative w-full md:w-96">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-silver/50" size={20} />
-            <input 
-              type="text" 
-              placeholder="Search by name, email, or ID..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-electric transition-colors"
-            />
-          </div>
-          <div className="flex gap-4 w-full md:w-auto">
-            <button
-              onClick={() => setShowAddUserModal(true)}
-              className="px-6 py-3 bg-electric text-navy font-bold rounded-xl text-sm hover:bg-electric/90 transition-colors flex items-center gap-2 whitespace-nowrap"
-            >
-              <Plus size={18} /> Add User
-            </button>
-            <div className="relative w-full md:w-48">
-              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-silver/50" size={18} />
-              <select 
-                value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-10 text-white focus:outline-none focus:border-electric transition-colors appearance-none"
-              >
-                <option value="all">All Dates</option>
-                <option value="2026-04-15">Apr 15, 2026</option>
-                <option value="2026-04-16">Apr 16, 2026</option>
-                <option value="2026-04-18">Apr 18, 2026</option>
-              </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-silver/50 pointer-events-none" size={16} />
+        {/* Controls and Calendar split */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-6">
+          <div className="lg:col-span-1">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-silver uppercase tracking-wider">Select Date</h3>
+                {selectedDate && (
+                  <button 
+                    onClick={() => setSelectedDate(undefined)}
+                    className="text-xs text-electric hover:text-white transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <style>{`
+                .rdp {
+                  --rdp-cell-size: 38px;
+                  --rdp-accent-color: #38bdf8;
+                  --rdp-background-color: rgba(255, 255, 255, 0.1);
+                  --rdp-outline: 2px solid var(--rdp-accent-color);
+                  margin: 0 auto;
+                }
+                .rdp-months { justify-content: center; }
+                .rdp-day { color: white; border-radius: 8px; }
+                .rdp-day_selected, .rdp-day_selected:focus-visible, .rdp-day_selected:hover {
+                  background-color: var(--rdp-accent-color);
+                  color: #0f172a;
+                  font-weight: bold;
+                }
+                .rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
+                  background-color: var(--rdp-background-color);
+                }
+                .rdp-caption_label { font-size: 1rem; font-weight: 600; color: white; }
+                .rdp-nav_button { color: #94a3b8; }
+                .rdp-nav_button:hover { color: white; background-color: rgba(255,255,255,0.1); }
+                .rdp-head_cell { color: #94a3b8; font-size: 0.8rem; font-weight: 500; text-transform: uppercase; }
+              `}</style>
+              <DayPicker
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                modifiers={{
+                  booked: reservations.map(r => parseISO(r.date)),
+                  blocked: schedule.filter(s => s.status === 'blocked').map(s => parseISO(s.date))
+                }}
+                modifiersStyles={{
+                  booked: { borderBottom: '2px solid #34d399' },
+                  blocked: { borderBottom: '2px solid #f87171' }
+                }}
+              />
+              <div className="mt-4 flex gap-4 text-xs text-silver justify-center">
+                <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-emerald-400"></div> Booked</div>
+                <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-red-400"></div> Blocked</div>
+              </div>
             </div>
           </div>
-        </div>
+          
+          <div className="lg:col-span-3">
+            <div className="flex flex-col md:flex-row gap-4 mb-6 items-center justify-between">
+              <div className="relative w-full md:w-96">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-silver/50" size={20} />
+                <input 
+                  type="text" 
+                  placeholder="Search by name, email, or ID..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-electric transition-colors"
+                />
+              </div>
+              <div className="flex gap-4 w-full md:w-auto">
+                <button
+                  onClick={() => setShowAddUserModal(true)}
+                  className="px-6 py-3 bg-electric text-navy font-bold rounded-xl text-sm hover:bg-electric/90 transition-colors flex items-center gap-2 whitespace-nowrap"
+                >
+                  <Plus size={18} /> Add User
+                </button>
+              </div>
+            </div>
 
-        {/* Reservations Table */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
+            {/* Reservations Table */}
+            <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
                 <tr className="bg-white/5 border-b border-white/10">
                   <th className="p-4 text-xs font-medium text-silver uppercase tracking-wider">Passenger</th>
                   <th className="p-4 text-xs font-medium text-silver uppercase tracking-wider">Session Details</th>
@@ -677,9 +729,11 @@ export default function Admin() {
             </table>
           </div>
         </div>
-      </main>
+      </div>
+    </div>
+  </main>
 
-      {/* Edit User Modal */}
+  {/* Edit User Modal */}
       {editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <motion.div 

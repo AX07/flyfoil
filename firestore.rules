@@ -92,5 +92,10 @@ service cloud.firestore {
                        
       allow delete: if isAdmin();
     }
+    match /mail/{mailId} {
+      // Anyone can create an email Trigger
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
   }
 }

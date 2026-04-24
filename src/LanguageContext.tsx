@@ -196,7 +196,8 @@ const translations: Record<Language, Record<string, string>> = {
     'footer.admin': 'Admin',
     'footer.hq': 'FlyFoil Formosa HQ',
     'footer.location': 'Ria Formosa, Portugal',
-    'footer.copyright': 'FLYFOILFORMOSA.COM. FlyFoil Formosa is operated in partnership with Altura Kite (RNAAT 981/2017).',
+    'footer.copyright1': 'FLYFOILFORMOSA.COM. FlyFoil Formosa is operated in partnership with ',
+    'footer.copyright2': ' (RNAAT 981/2017).',
 
     // Mobile Nav
     'nav.home': 'Home',
@@ -418,7 +419,8 @@ const translations: Record<Language, Record<string, string>> = {
     'footer.admin': 'Administração',
     'footer.hq': 'Sede FlyFoil Formosa',
     'footer.location': 'Ria Formosa, Portugal',
-    'footer.copyright': 'FLYFOILFORMOSA.COM. A FlyFoil Formosa opera em parceria com a Altura Kite (RNAAT 981/2017).',
+    'footer.copyright1': 'FLYFOILFORMOSA.COM. A FlyFoil Formosa opera em parceria com a ',
+    'footer.copyright2': ' (RNAAT 981/2017).',
 
     // Mobile Nav
     'nav.home': 'Início',

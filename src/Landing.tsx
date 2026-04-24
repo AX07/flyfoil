@@ -982,6 +982,27 @@ export default function Landing() {
                   createdAt: new Date()
                 });
 
+                // Add an email trigger document for the Firebase 'Trigger Email' extension
+                batch.set(doc(collection(db, 'mail')), {
+                  to: 'crytoax07@gmail.com',
+                  message: {
+                    subject: `New Booking: ${bookingData.fullName} - ${date}`,
+                    text: `New Booking Received\nName: ${bookingData.fullName}\nEmail: ${bookingData.email}\nPhone: ${bookingData.phone}\nDate: ${date}\nTime: ${sessionTime}\nExperience: ${bookingData.experience}\nLocation: ${bookingData.location}`,
+                    html: `
+                      <h2>New Booking Received</h2>
+                      <p><strong>Name:</strong> ${bookingData.fullName}</p>
+                      <p><strong>Email:</strong> ${bookingData.email}</p>
+                      <p><strong>Phone:</strong> ${bookingData.phone}</p>
+                      <p><strong>Date:</strong> ${date}</p>
+                      <p><strong>Time:</strong> ${sessionTime}</p>
+                      <p><strong>Experience:</strong> ${bookingData.experience}</p>
+                      <p><strong>Location:</strong> ${bookingData.location}</p>
+                      <p><strong>Reservation ID:</strong> ${reservationRef.id}</p>
+                      <p><a href="${window.location.origin}/dashboard/${reservationRef.id}">View Dashboard</a></p>
+                    `
+                  }
+                });
+
                 await batch.commit();
                 
                 const profileLink = `${window.location.origin}/dashboard/${reservationRef.id}`;
@@ -1202,10 +1223,16 @@ export default function Landing() {
           
           <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-silver/50">
             <div className="flex flex-col items-center md:items-start gap-4">
-              <p>&copy; {new Date().getFullYear()} {t('footer.copyright')}</p>
+              <p className="text-center md:text-left">
+                &copy; {new Date().getFullYear()} {t('footer.copyright1')}
+                <a href="https://alturakites.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors underline decoration-white/30 underline-offset-2">Altura Kites</a>
+                {t('footer.copyright2')}
+              </p>
               <div className="flex items-center gap-6">
                 <img src="https://imgs.search.brave.com/8n-Fsh85cV8aawKfHyVf2rhcLGMSSihqf-rmdraypDI/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pLnBp/bmltZy5jb20vb3Jp/Z2luYWxzL2E2LzJk/LzY5L2E2MmQ2OTE1/M2U1NGY5NWFlNjE0/ODY3MjNjOTgyYTJh/LmpwZw" alt="Turismo de Portugal" className="h-12 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity" />
-                <img src="https://www.alturakites.com/assets/images/untitled-1-160x116.png" alt="Altura Kites" className={`h-12 w-auto object-contain transition-all ${isDarkMode ? 'opacity-70 hover:opacity-100 brightness-0 invert' : 'opacity-70 hover:opacity-100'}`} />
+                <a href="https://alturakites.com" target="_blank" rel="noopener noreferrer" className="flex items-center">
+                  <img src="https://www.alturakites.com/assets/images/untitled-1-160x116.png" alt="Altura Kites" className={`h-12 w-auto object-contain transition-all ${isDarkMode ? 'opacity-70 hover:opacity-100 brightness-0 invert' : 'opacity-70 hover:opacity-100'}`} />
+                </a>
               </div>
             </div>
             <div className="flex gap-6">
