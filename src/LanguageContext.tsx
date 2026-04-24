@@ -24,10 +24,10 @@ const translations: Record<Language, Record<string, string>> = {
     'hero.btn': 'SECURE YOUR SESSION',
     
     // Pricing
-    'pricing.starter.title': 'Starter Flight (For 2 or 3)',
-    'pricing.starter.desc': '20 min Instruction Session each',
+    'pricing.starter.title': 'Starter Flight (For 3)',
+    'pricing.starter.desc': '20 min session each',
     'pricing.half.title': 'Half Experience (For 2)',
-    'pricing.half.desc': '30 min Glide each',
+    'pricing.half.desc': '30 min session each',
     'pricing.full.title': 'Full Experience (Solo)',
     'pricing.full.desc': '1h Solo Session',
     'pricing.popular': 'MOST POPULAR',
@@ -246,10 +246,10 @@ const translations: Record<Language, Record<string, string>> = {
     'hero.btn': 'GARANTA A SUA SESSÃO',
     
     // Pricing
-    'pricing.starter.title': 'Voo de Iniciação (Para 2 ou 3)',
-    'pricing.starter.desc': 'Sessão de Instrução de 20 min cada',
+    'pricing.starter.title': 'Voo de Iniciação (Para 3)',
+    'pricing.starter.desc': 'Sessão de 20 min cada',
     'pricing.half.title': 'Meia Experiência (Para 2)',
-    'pricing.half.desc': 'Deslize de 30 min cada',
+    'pricing.half.desc': 'Sessão de 30 min cada',
     'pricing.full.title': 'Experiência Completa (Individual)',
     'pricing.full.desc': 'Sessão Individual de 1h',
     'pricing.popular': 'MAIS POPULAR',
@@ -463,6 +463,8 @@ const LanguageContext = createContext<LanguageContextType>({
 
 export const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
   const [language, setLanguage] = useState<Language>(() => {
+    const path = window.location.pathname;
+    if (path.startsWith('/pt')) return 'pt';
     const saved = localStorage.getItem('language');
     return (saved as Language) || 'en';
   });

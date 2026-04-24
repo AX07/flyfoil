@@ -45,10 +45,15 @@ function AppContent() {
       <Suspense fallback={<LoadingScreen />}>
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/pt" element={<Landing />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/pt/login" element={<Login />} />
           <Route path="/dashboard/:id" element={<Dashboard />} />
+          <Route path="/pt/dashboard/:id" element={<Dashboard />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/pt/admin" element={<Admin />} />
           <Route path="/welcome" element={<Welcome />} />
+          <Route path="/pt/welcome" element={<Welcome />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

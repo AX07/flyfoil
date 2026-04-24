@@ -7,7 +7,7 @@ import { db } from './firebase';
 import { useLanguage } from './LanguageContext';
 
 export default function Login() {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const [method, setMethod] = useState<'email' | 'phone'>('email');
   const [inputValue, setInputValue] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +51,7 @@ export default function Login() {
       
       // Log the user in directly
       localStorage.setItem('auth_reservation', reservationId);
-      navigate(`/dashboard/${reservationId}`);
+      navigate(language === 'pt' ? `/pt/dashboard/${reservationId}` : `/dashboard/${reservationId}`);
       
     } catch (err) {
       console.error("Error querying reservations:", err);

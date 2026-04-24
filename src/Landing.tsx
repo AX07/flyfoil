@@ -224,7 +224,7 @@ export default function Landing() {
             <button onClick={() => scrollTo('experience')} className="text-sm font-medium hover:text-electric transition-colors">{t('nav.experience')}</button>
             <button onClick={() => scrollTo('locations')} className="text-sm font-medium hover:text-electric transition-colors">{t('nav.locations')}</button>
             <button onClick={() => scrollTo('pricing')} className="text-sm font-medium hover:text-electric transition-colors">{t('nav.pricing')}</button>
-            <button onClick={() => navigate('/login')} className="text-sm font-medium text-electric hover:text-white transition-colors">{t('nav.flightdeck')}</button>
+            <button onClick={() => navigate(language === 'pt' ? '/pt/login' : '/login')} className="text-sm font-medium text-electric hover:text-white transition-colors">{t('nav.flightdeck')}</button>
             <button onClick={() => scrollTo('booking')} className="px-6 py-2.5 bg-transparent border-2 border-white text-white font-bold rounded-full hover:bg-white hover:text-navy transition-all duration-300">
               {t('nav.booknow')}
             </button>
@@ -258,7 +258,7 @@ export default function Landing() {
           <button onClick={() => scrollTo('experience')} className="text-2xl font-medium text-left border-b border-white/10 pb-4">{t('nav.experience')}</button>
           <button onClick={() => scrollTo('locations')} className="text-2xl font-medium text-left border-b border-white/10 pb-4">{t('nav.locations')}</button>
           <button onClick={() => scrollTo('pricing')} className="text-2xl font-medium text-left border-b border-white/10 pb-4">{t('nav.pricing')}</button>
-          <button onClick={() => navigate('/login')} className="text-2xl font-medium text-left border-b border-white/10 pb-4 text-electric">{t('nav.flightdeck')}</button>
+          <button onClick={() => navigate(language === 'pt' ? '/pt/login' : '/login')} className="text-2xl font-medium text-left border-b border-white/10 pb-4 text-electric">{t('nav.flightdeck')}</button>
           <button onClick={() => scrollTo('booking')} className="mt-4 px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-full text-xl text-center hover:bg-white hover:text-navy transition-all duration-300">
             {t('nav.booknow')}
           </button>
@@ -268,8 +268,8 @@ export default function Landing() {
       {/* Hero Section */}
       <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-black/40 z-10"></div>
-          <div className="absolute inset-0 bg-gradient-to-b from-navy/60 via-navy/20 to-transparent z-10"></div>
+          <div className={`absolute inset-0 z-10 ${isDarkMode ? 'bg-black/40' : 'bg-black/60 sm:bg-black/40'}`}></div>
+          <div className={`absolute inset-0 z-10 bg-gradient-to-b ${isDarkMode ? 'from-navy/60 via-navy/20' : 'from-navy/80 via-navy/40'} to-transparent`}></div>
           <video 
             className="w-full h-full object-cover"
             autoPlay 
@@ -312,7 +312,7 @@ export default function Landing() {
               { 
                 id: "starter-flight", 
                 title: t('pricing.starter.title'), 
-                price: "€120", 
+                price: "€180", 
                 desc: t('pricing.starter.desc'),
                 icon: <GraduationCap size={56} strokeWidth={1} className="mb-4 text-white group-hover:text-electric transition-colors duration-300" />
               },
@@ -343,7 +343,7 @@ export default function Landing() {
                 </div>
                 <h3 className="text-silver font-medium text-[10px] sm:text-sm mb-0.5 md:mb-1 uppercase tracking-wider drop-shadow-md">{plan.title}</h3>
                 <div className="text-xl sm:text-3xl font-bold text-white mb-0.5 md:mb-1 drop-shadow-lg">{plan.price}</div>
-                <p className="text-[8px] sm:text-xs text-silver/60 uppercase tracking-widest hidden sm:block drop-shadow-md">{plan.desc}</p>
+                <p className="text-[8px] sm:text-xs text-silver/60 uppercase tracking-widest drop-shadow-md">{plan.desc}</p>
               </div>
             ))}
           </motion.div>
@@ -492,8 +492,8 @@ export default function Landing() {
 
           <div className="flex flex-col gap-16">
             {[
-              { id: "starter-flight", icon: <GraduationCap size={40} strokeWidth={1} />, title: t('pricing.starter.title'), desc: t('pricing.starter.longDesc'), duration: "20 min/pax", price: "€180", videoId: "5rR4XPne7MU", comingSoon: false },
-              { id: "half-experience", icon: <Waves size={40} strokeWidth={1} />, title: t('pricing.half.title'), desc: t('pricing.half.longDesc'), duration: "30 min/pax", price: "€160", videoId: "cuvJeTT4ksI", comingSoon: false },
+              { id: "starter-flight", icon: <GraduationCap size={40} strokeWidth={1} />, title: t('pricing.starter.title'), desc: t('pricing.starter.longDesc'), duration: t('pricing.starter.desc'), price: "€180", videoId: "5rR4XPne7MU", comingSoon: false },
+              { id: "half-experience", icon: <Waves size={40} strokeWidth={1} />, title: t('pricing.half.title'), desc: t('pricing.half.longDesc'), duration: t('pricing.half.desc'), price: "€160", videoId: "cuvJeTT4ksI", comingSoon: false },
               { id: "full-experience", icon: <Compass size={40} strokeWidth={1} />, title: t('pricing.full.title'), desc: t('pricing.full.longDesc'), duration: "1h", price: "€150", videoId: "dTxpgd_Gu6w", comingSoon: false }
             ].map((feature, i) => (
               <motion.div 
@@ -531,9 +531,9 @@ export default function Landing() {
                     <p className="text-silver/80 leading-relaxed text-lg font-light max-w-2xl">{feature.desc}</p>
                   </div>
                   <div className="flex flex-col gap-6 w-full md:w-auto shrink-0">
-                    <div className="flex gap-4 md:justify-end">
-                      <span className="text-xs tracking-[0.2em] uppercase border border-white/20 px-4 py-2 rounded-full text-silver">{feature.duration}</span>
-                      <span className="text-xs tracking-[0.2em] uppercase border border-[#D4AF37]/30 text-[#D4AF37] px-4 py-2 rounded-full">{feature.price}</span>
+                    <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 md:gap-4">
+                      <span className="text-[10px] md:text-xs tracking-[0.2em] uppercase border border-white/20 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-silver text-center">{feature.duration}</span>
+                      <span className="text-[10px] md:text-xs tracking-[0.2em] uppercase border border-[#D4AF37]/30 text-[#D4AF37] px-3 md:px-4 py-1.5 md:py-2 rounded-full text-center">{feature.price}</span>
                     </div>
                     {feature.comingSoon ? (
                       <button disabled className="px-8 py-4 bg-white/5 border border-white/10 text-white/50 text-sm font-bold tracking-widest uppercase rounded-xl cursor-not-allowed text-center">
@@ -1012,7 +1012,7 @@ export default function Landing() {
                 
                 localStorage.setItem('auth_reservation', reservationRef.id);
                 window.scrollTo(0, 0);
-                navigate(`/dashboard/${reservationRef.id}`);
+                navigate(language === 'pt' ? `/pt/dashboard/${reservationRef.id}` : `/dashboard/${reservationRef.id}`);
               } catch (error) {
                 console.error("Error adding reservation: ", error);
                 alert("There was an error processing your reservation: " + (error instanceof Error ? error.message : String(error)));
@@ -1245,7 +1245,7 @@ export default function Landing() {
           <Calendar size={24} />
           <span className="text-[10px] font-bold tracking-widest uppercase">{t('common.book')}</span>
         </button>
-        <button onClick={() => navigate('/login')} className="flex flex-col items-center gap-1 text-silver hover:text-electric transition-colors">
+        <button onClick={() => navigate(language === 'pt' ? '/pt/login' : '/login')} className="flex flex-col items-center gap-1 text-silver hover:text-electric transition-colors">
           <User size={24} />
           <span className="text-[10px] font-bold tracking-widest uppercase">{t('nav.profile')}</span>
         </button>
