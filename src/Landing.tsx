@@ -14,6 +14,7 @@ import {
 import { collection, addDoc, doc, getDoc, writeBatch } from 'firebase/firestore';
 import { db } from './firebase';
 import { useLanguage } from './LanguageContext';
+import emailjs from '@emailjs/browser';
 
 const createCustomIcon = (isActive: boolean) => L.divIcon({
   className: 'custom-leaflet-icon',
@@ -982,26 +983,36 @@ export default function Landing() {
                   createdAt: new Date()
                 });
 
-                // Add an email trigger document for the Firebase 'Trigger Email' extension
-                batch.set(doc(collection(db, 'mail')), {
-                  to: 'crytoax07@gmail.com',
-                  message: {
-                    subject: `New Booking: ${bookingData.fullName} - ${date}`,
-                    text: `New Booking Received\nName: ${bookingData.fullName}\nEmail: ${bookingData.email}\nPhone: ${bookingData.phone}\nDate: ${date}\nTime: ${sessionTime}\nExperience: ${bookingData.experience}\nLocation: ${bookingData.location}`,
-                    html: `
-                      <h2>New Booking Received</h2>
-                      <p><strong>Name:</strong> ${bookingData.fullName}</p>
-                      <p><strong>Email:</strong> ${bookingData.email}</p>
-                      <p><strong>Phone:</strong> ${bookingData.phone}</p>
-                      <p><strong>Date:</strong> ${date}</p>
-                      <p><strong>Time:</strong> ${sessionTime}</p>
-                      <p><strong>Experience:</strong> ${bookingData.experience}</p>
-                      <p><strong>Location:</strong> ${bookingData.location}</p>
-                      <p><strong>Reservation ID:</strong> ${reservationRef.id}</p>
-                      <p><a href="${window.location.origin}/dashboard/${reservationRef.id}">View Dashboard</a></p>
-                    `
+                // Set these up in your EmailJS account and add them to your environment variables
+                // VITE_EMAILJS_SERVICE_ID
+                // VITE_EMAILJS_TEMPLATE_ID
+                // VITE_EMAILJS_PUBLIC_KEY
+                try {
+                  if (import.meta.env.VITE_EMAILJS_SERVICE_ID && import.meta.env.VITE_EMAILJS_TEMPLATE_ID) {
+                    await emailjs.send(
+                      import.meta.env.VITE_EMAILJS_SERVICE_ID,
+                      import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+                      {
+                        to_email: 'crytoax07@gmail.com',
+                        from_name: bookingData.fullName,
+                        booking_date: date,
+                        booking_time: sessionTime,
+                        experience: bookingData.experience,
+                        location: bookingData.location,
+                        customer_email: bookingData.email,
+                        customer_phone: bookingData.phone,
+                        reservation_id: reservationRef.id,
+                        dashboard_link: `${window.location.origin}/dashboard/${reservationRef.id}`
+                      },
+                      import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+                    );
+                  } else {
+                    console.warn("EmailJS is not configured. Booking was saved but email notification was skipped.");
                   }
-                });
+                } catch (emailError) {
+                  console.error("Failed to send email notification:", emailError);
+                  // Don't fail the booking if email fails
+                }
 
                 await batch.commit();
                 
