@@ -390,14 +390,13 @@ export default function Dashboard() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="rounded-2xl overflow-hidden border border-white/10 bg-navy-light relative aspect-video">
-              <iframe 
-                className="absolute inset-0 w-full h-full"
-                src="https://www.youtube.com/embed/FenSw41WbvQ?si=xewKNHlSgTNQ82us&controls=1&rel=0&modestbranding=1" 
-                title="Safety Briefing Checklist"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowFullScreen
-                loading="lazy"
-              ></iframe>
+              <video 
+                className="absolute inset-0 w-full h-full object-cover"
+                controls
+                playsInline
+              >
+                <source src="/assets/safety.webm" type="video/webm" />
+              </video>
             </div>
             <div className="flex flex-col justify-center">
               <h3 className="text-xl font-display font-bold text-white mb-4 uppercase tracking-wider">{t('dashboard.checklistTitle')}</h3>

@@ -44,7 +44,7 @@ export default function Landing() {
     { id: "fuseta", name: t('loc.fuseta.name'), desc: t('loc.fuseta.desc'), highlight: false, videoId: "iX9567Pd0Us", coords: [[37.050, -7.745] as [number, number]] },
     { id: "cabanas", name: t('loc.cabanas.name'), desc: t('loc.cabanas.desc'), highlight: false, videoId: "_f3zSvTuUl4", coords: [[37.133, -7.590] as [number, number]] },
     { id: "altura", name: t('loc.altura.name'), desc: t('loc.altura.desc'), highlight: false, videoId: "iX9567Pd0Us", coords: [[37.173, -7.495] as [number, number]] },
-    { id: "cross-border", name: t('loc.cross.name'), desc: t('loc.cross.desc'), highlight: false, videoId: "jJYbSImw_HE", coords: [[37.195, -7.415] as [number, number], [37.200, -7.320] as [number, number]] }
+    { id: "adventure", name: t('loc.adventure.name'), desc: t('loc.adventure.desc'), highlight: false, videoId: "jJYbSImw_HE", coords: [[37.050, -7.745] as [number, number], [37.133, -7.590] as [number, number]] }
   ];
 
   const videos = ["mN7_Nz5d0oM", "AxWRIK85GgM", "b4yCyD4L2kE"];
@@ -58,7 +58,7 @@ export default function Landing() {
   });
   const [activeLocationId, setActiveLocationId] = useState(locations[2].id); // Default to Cabanas
   const activeLocation = locations.find(l => l.id === activeLocationId) || locations[2];
-  const [selectedExperience, setSelectedExperience] = useState(() => t('pricing.starter.title') + " - €180");
+  const [selectedExperience, setSelectedExperience] = useState(() => t('pricing.pack1.title') + " - €150");
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
   const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0);
@@ -278,8 +278,7 @@ export default function Landing() {
             loop 
             playsInline
           >
-            <source src="/assets/hero-video.webm" type="video/webm" />
-            <source src="https://sevenpalmsmarbella.com/wp-content/uploads/2023/02/efoil_seven_palms_home_intro.mov" />
+            <source src="/assets/hero.webm" type="video/webm" />
           </video>
         </div>
 
@@ -306,45 +305,53 @@ export default function Landing() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6 }}
-            className="w-full max-w-4xl grid grid-cols-3 gap-2 sm:gap-4 md:gap-8 mb-8 md:mb-10"
+            className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-10"
             id="pricing"
           >
             {[
               { 
-                id: "starter-flight", 
-                title: t('pricing.starter.title'), 
-                price: "€180", 
-                desc: t('pricing.starter.desc'),
-                icon: <GraduationCap size={56} strokeWidth={1} className="mb-4 text-white group-hover:text-electric transition-colors duration-300" />
+                id: "pack1", 
+                title: t('pricing.pack1.title'), 
+                price: "€150", 
+                desc: t('pricing.pack1.desc'),
+                icon: <Compass size={56} strokeWidth={1} className="mb-4 text-white group-hover:text-electric transition-colors duration-300" />
               },
               { 
-                id: "half-experience", 
-                title: t('pricing.half.title'), 
-                price: "€160", 
-                desc: t('pricing.half.desc'), 
+                id: "pack2", 
+                title: t('pricing.pack2.title'), 
+                price: "€80", 
+                desc: t('pricing.pack2.desc'), 
                 popular: true,
                 icon: <Waves size={56} strokeWidth={1} className="mb-4 text-white group-hover:text-electric transition-colors duration-300" />
               },
               { 
-                id: "full-experience", 
-                title: t('pricing.full.title'), 
-                price: "€150", 
-                desc: t('pricing.full.desc'),
+                id: "pack3", 
+                title: t('pricing.pack3.title'), 
+                price: "€60", 
+                desc: t('pricing.pack3.desc'),
+                icon: <GraduationCap size={56} strokeWidth={1} className="mb-4 text-white group-hover:text-electric transition-colors duration-300" />
+              },
+              {
+                id: "pack4", 
+                title: t('pricing.pack4.title'), 
+                price: "€250", 
+                desc: t('pricing.pack4.desc'),
                 icon: <Compass size={56} strokeWidth={1} className="mb-4 text-white group-hover:text-electric transition-colors duration-300" />
               }
             ].map((plan, i) => (
               <div 
                 key={i} 
                 onClick={() => scrollTo(plan.id)}
-                className="cursor-pointer relative p-2 sm:p-4 md:p-6 flex flex-col items-center text-center transition-transform hover:scale-105 group drop-shadow-lg"
+                className="cursor-pointer relative p-4 md:p-6 flex flex-col items-center text-center transition-transform hover:scale-105 group drop-shadow-lg bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10"
               >
-                {plan.popular && <div className="absolute -top-4 md:-top-2 left-1/2 -translate-x-1/2 text-electric text-[8px] md:text-[10px] font-bold px-2 md:px-3 py-1 tracking-widest uppercase drop-shadow-md">{t('pricing.popular')}</div>}
-                <div className="transform group-hover:-translate-y-2 transition-transform duration-300 scale-75 sm:scale-100 drop-shadow-xl">
+                {plan.popular && <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-electric text-[10px] font-bold px-3 py-1 tracking-widest uppercase bg-navy rounded-full border border-electric/30 drop-shadow-md z-10">{t('pricing.popular')}</div>}
+                <div className="transform group-hover:-translate-y-2 transition-transform duration-300 scale-90 sm:scale-100 drop-shadow-xl mt-2">
                   {plan.icon}
                 </div>
-                <h3 className="text-silver font-medium text-[10px] sm:text-sm mb-0.5 md:mb-1 uppercase tracking-wider drop-shadow-md">{plan.title}</h3>
-                <div className="text-xl sm:text-3xl font-bold text-white mb-0.5 md:mb-1 drop-shadow-lg">{plan.price}</div>
-                <p className="text-[8px] sm:text-xs text-silver/60 uppercase tracking-widest drop-shadow-md">{plan.desc}</p>
+                <h3 className="text-silver font-medium text-xs sm:text-sm mb-1 uppercase tracking-wider drop-shadow-md">{plan.title}</h3>
+                <div className="text-2xl sm:text-3xl font-bold text-white mb-0 drop-shadow-lg">{plan.price}</div>
+                <div className="text-[10px] sm:text-xs text-electric uppercase tracking-widest font-bold mb-2">per person</div>
+                <p className="text-[10px] sm:text-xs text-silver/60 uppercase tracking-widest drop-shadow-md px-2">{plan.desc}</p>
               </div>
             ))}
           </motion.div>
@@ -493,9 +500,10 @@ export default function Landing() {
 
           <div className="flex flex-col gap-16">
             {[
-              { id: "starter-flight", icon: <GraduationCap size={40} strokeWidth={1} />, title: t('pricing.starter.title'), desc: t('pricing.starter.longDesc'), duration: t('pricing.starter.desc'), price: "€180", videoId: "5rR4XPne7MU", comingSoon: false },
-              { id: "half-experience", icon: <Waves size={40} strokeWidth={1} />, title: t('pricing.half.title'), desc: t('pricing.half.longDesc'), duration: t('pricing.half.desc'), price: "€160", videoId: "cuvJeTT4ksI", comingSoon: false },
-              { id: "full-experience", icon: <Compass size={40} strokeWidth={1} />, title: t('pricing.full.title'), desc: t('pricing.full.longDesc'), duration: "1h", price: "€150", videoId: "dTxpgd_Gu6w", comingSoon: false }
+              { id: "pack1", icon: <Compass size={40} strokeWidth={1} />, title: t('pricing.pack1.title'), desc: t('pricing.pack1.longDesc'), duration: t('pricing.pack1.desc'), price: "€150", totalPrice: t('pricing.pack1.total'), video: "/assets/solo.webm", comingSoon: false },
+              { id: "pack2", icon: <Waves size={40} strokeWidth={1} />, title: t('pricing.pack2.title'), desc: t('pricing.pack2.longDesc'), duration: t('pricing.pack2.desc'), price: "€80", totalPrice: t('pricing.pack2.total'), video: "/assets/duo.webm", comingSoon: false },
+              { id: "pack3", icon: <GraduationCap size={40} strokeWidth={1} />, title: t('pricing.pack3.title'), desc: t('pricing.pack3.longDesc'), duration: t('pricing.pack3.desc'), price: "€60", totalPrice: t('pricing.pack3.total'), video: "/assets/trio.webm", comingSoon: false },
+              { id: "pack4", icon: <Compass size={40} strokeWidth={1} />, title: t('pricing.pack4.title'), desc: t('pricing.pack4.longDesc'), duration: t('pricing.pack4.desc'), price: "€250", totalPrice: t('pricing.pack4.total'), video: "/assets/adventure.webm", comingSoon: false }
             ].map((feature, i) => (
               <motion.div 
                 key={i}
@@ -508,17 +516,15 @@ export default function Landing() {
               >
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
                 <div className="w-full h-[300px] md:h-[400px] rounded-2xl overflow-hidden relative">
-                  <iframe 
-                    width="100%" 
-                    height="100%" 
-                    src={`https://www.youtube.com/embed/${feature.videoId}?autoplay=1&mute=1&loop=1&playlist=${feature.videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1`} 
-                    title={feature.title}
-                    frameBorder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowFullScreen
-                    loading="lazy"
-                    className="w-full h-full object-cover pointer-events-none scale-150"
-                  ></iframe>
+                  <video 
+                    className="w-full h-full object-cover pointer-events-none scale-105"
+                    autoPlay 
+                    muted 
+                    loop 
+                    playsInline
+                  >
+                    <source src={feature.video} type="video/webm" />
+                  </video>
                   <div className="absolute inset-0 bg-navy/20 group-hover:bg-transparent transition-colors duration-700 pointer-events-none"></div>
                 </div>
                 <div className="flex flex-col md:flex-row gap-8 items-start md:items-center justify-between">
@@ -531,10 +537,12 @@ export default function Landing() {
                     </div>
                     <p className="text-silver/80 leading-relaxed text-lg font-light max-w-2xl">{feature.desc}</p>
                   </div>
-                  <div className="flex flex-col gap-6 w-full md:w-auto shrink-0">
-                    <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 md:gap-4">
-                      <span className="text-[10px] md:text-xs tracking-[0.2em] uppercase border border-white/20 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-silver text-center">{feature.duration}</span>
-                      <span className="text-[10px] md:text-xs tracking-[0.2em] uppercase border border-[#D4AF37]/30 text-[#D4AF37] px-3 md:px-4 py-1.5 md:py-2 rounded-full text-center">{feature.price}</span>
+                  <div className="flex flex-col gap-6 w-full md:w-auto shrink-0 mt-4 md:mt-0">
+                    <div className="flex flex-col items-center md:items-end mb-2">
+                      <span className="text-[10px] md:text-xs tracking-[0.2em] uppercase border border-white/20 px-3 py-1.5 rounded-full text-silver text-center mb-4">{feature.duration}</span>
+                      <div className="text-5xl md:text-6xl font-black text-white drop-shadow-lg mb-1">{feature.price}</div>
+                      <div className="text-xs text-electric uppercase tracking-widest font-bold mb-2">{t('pricing.perPerson')}</div>
+                      <div className="text-[11px] text-silver/60 uppercase tracking-widest">{feature.totalPrice}</div>
                     </div>
                     {feature.comingSoon ? (
                       <button disabled className="px-8 py-4 bg-white/5 border border-white/10 text-white/50 text-sm font-bold tracking-widest uppercase rounded-xl cursor-not-allowed text-center">
@@ -542,8 +550,8 @@ export default function Landing() {
                       </button>
                     ) : (
                       <button onClick={() => {
-                        setSelectedExperience(`${feature.title} (${feature.duration}) - ${feature.price}`);
-                        scrollTo('locations');
+                        const message = `Hey! I want to book the ${feature.title} session.`;
+                        window.open(`https://wa.me/351961850859?text=${encodeURIComponent(message)}`, '_blank');
                       }} className="px-8 py-4 bg-navy border border-white/10 text-white text-sm font-bold tracking-widest uppercase rounded-xl hover:bg-white hover:text-navy transition-all duration-300 text-center">
                         {t('common.bookThisFlight')}
                       </button>
@@ -679,14 +687,6 @@ export default function Landing() {
             <span className="text-white font-bold tracking-widest uppercase text-sm">{t('social.follow')}</span>
             <a href="https://www.instagram.com/flyfoilformosa/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-electric hover:text-navy hover:border-electric transition-all">
               <Instagram size={20} />
-            </a>
-            <a href="https://www.tiktok.com/@flyfoilformosa" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-electric hover:text-navy hover:border-electric transition-all">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path>
-              </svg>
-            </a>
-            <a href="https://www.youtube.com/@FlyFoilFormosa" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-electric hover:text-navy hover:border-electric transition-all">
-              <Youtube size={20} />
             </a>
             <a href="https://g.page/r/CXoNgFSNAwbVEBM/review" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-electric hover:text-navy hover:border-electric transition-all" title="Review us on Google">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -880,8 +880,7 @@ export default function Landing() {
             loop 
             playsInline
           >
-            <source src="/assets/hero-video.webm" type="video/webm" />
-            <source src="https://sevenpalmsmarbella.com/wp-content/uploads/2023/02/efoil_seven_palms_home_intro.mov" />
+            <source src="/assets/hero.webm" type="video/webm" />
           </video>
         </div>
 
@@ -1135,9 +1134,10 @@ export default function Landing() {
                     onChange={(e) => setSelectedExperience(e.target.value)}
                     className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-4 text-white focus:outline-none focus:border-electric transition-colors appearance-none"
                   >
-                    <option className="bg-navy text-white" value={t('pricing.starter.title') + " - €180"}>{t('pricing.starter.title')} - €180</option>
-                    <option className="bg-navy text-white" value={t('pricing.half.title') + " - €160"}>{t('pricing.half.title')} - €160</option>
-                    <option className="bg-navy text-white" value={t('pricing.full.title') + " - €150"}>{t('pricing.full.title')} - €150</option>
+                    <option className="bg-navy text-white" value={t('pricing.pack1.title') + " - €150"}>{t('pricing.pack1.title')} - €150</option>
+                    <option className="bg-navy text-white" value={t('pricing.pack2.title') + " - €80"}>{t('pricing.pack2.title')} - €80</option>
+                    <option className="bg-navy text-white" value={t('pricing.pack3.title') + " - €60"}>{t('pricing.pack3.title')} - €60</option>
+                    <option className="bg-navy text-white" value={t('pricing.pack4.title') + " - €250"}>{t('pricing.pack4.title')} - €250</option>
                   </select>
                 </div>
               </div>
@@ -1193,14 +1193,6 @@ export default function Landing() {
               <div className="flex gap-4">
                 <a href="https://www.instagram.com/flyfoilformosa/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-navy-light flex items-center justify-center hover:bg-electric hover:text-navy cursor-pointer transition-colors border border-white/10">
                   <Instagram size={20} />
-                </a>
-                <a href="https://www.tiktok.com/@flyfoilformosa" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-navy-light flex items-center justify-center hover:bg-electric hover:text-navy cursor-pointer transition-colors border border-white/10">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path>
-                  </svg>
-                </a>
-                <a href="https://www.youtube.com/@FlyFoilFormosa" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-navy-light flex items-center justify-center hover:bg-electric hover:text-navy cursor-pointer transition-colors border border-white/10">
-                  <Youtube size={20} />
                 </a>
                 <a href="https://g.page/r/CXoNgFSNAwbVEBM/review" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-navy-light flex items-center justify-center hover:bg-electric hover:text-navy cursor-pointer transition-colors border border-white/10" title="Review us on Google">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">

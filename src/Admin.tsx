@@ -786,7 +786,7 @@ export default function Admin() {
                   <option value="Fuseta" className="bg-navy">Fuseta</option>
                   <option value="Cabanas de Tavira" className="bg-navy">Cabanas de Tavira</option>
                   <option value="Altura" className="bg-navy">Altura</option>
-                  <option value="The Cross-Border Special" className="bg-navy">The Cross-Border Special</option>
+                  <option value="The Adventure Pack" className="bg-navy">The Adventure Pack</option>
                 </select>
               </div>
 
@@ -892,7 +892,7 @@ export default function Admin() {
                     <option value="Fuseta" className="bg-navy">Fuseta</option>
                     <option value="Cabanas de Tavira" className="bg-navy">Cabanas de Tavira</option>
                     <option value="Altura" className="bg-navy">Altura</option>
-                    <option value="The Cross-Border Special" className="bg-navy">The Cross-Border Special</option>
+                    <option value="The Adventure Pack" className="bg-navy">The Adventure Pack</option>
                   </select>
                 </div>
                 <div>
