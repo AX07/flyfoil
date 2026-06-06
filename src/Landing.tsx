@@ -278,7 +278,8 @@ export default function Landing() {
             loop 
             playsInline
           >
-            <source src="/assets/hero.webm" type="video/webm" />
+            <source src="/assets/hero-video.webm" type="video/webm" />
+            <source src="/assets/hero-video.mp4" type="video/mp4" />
           </video>
         </div>
 
@@ -500,10 +501,10 @@ export default function Landing() {
 
           <div className="flex flex-col gap-16">
             {[
-              { id: "pack1", icon: <Compass size={40} strokeWidth={1} />, title: t('pricing.pack1.title'), desc: t('pricing.pack1.longDesc'), duration: t('pricing.pack1.desc'), price: "€150", totalPrice: t('pricing.pack1.total'), video: "/assets/solo.webm", comingSoon: false },
-              { id: "pack2", icon: <Waves size={40} strokeWidth={1} />, title: t('pricing.pack2.title'), desc: t('pricing.pack2.longDesc'), duration: t('pricing.pack2.desc'), price: "€80", totalPrice: t('pricing.pack2.total'), video: "/assets/duo.webm", comingSoon: false },
-              { id: "pack3", icon: <GraduationCap size={40} strokeWidth={1} />, title: t('pricing.pack3.title'), desc: t('pricing.pack3.longDesc'), duration: t('pricing.pack3.desc'), price: "€60", totalPrice: t('pricing.pack3.total'), video: "/assets/trio.webm", comingSoon: false },
-              { id: "pack4", icon: <Compass size={40} strokeWidth={1} />, title: t('pricing.pack4.title'), desc: t('pricing.pack4.longDesc'), duration: t('pricing.pack4.desc'), price: "€250", totalPrice: t('pricing.pack4.total'), video: "/assets/adventure.webm", comingSoon: false }
+              { id: "pack1", icon: <Compass size={40} strokeWidth={1} />, title: t('pricing.pack1.title'), desc: t('pricing.pack1.longDesc'), duration: t('pricing.pack1.desc'), price: "€150", totalPrice: t('pricing.pack1.total'), videoId: "pcQg3epX7-o", comingSoon: false },
+              { id: "pack2", icon: <Waves size={40} strokeWidth={1} />, title: t('pricing.pack2.title'), desc: t('pricing.pack2.longDesc'), duration: t('pricing.pack2.desc'), price: "€80", totalPrice: t('pricing.pack2.total'), videoId: "I-thFmfurrk", comingSoon: false },
+              { id: "pack3", icon: <GraduationCap size={40} strokeWidth={1} />, title: t('pricing.pack3.title'), desc: t('pricing.pack3.longDesc'), duration: t('pricing.pack3.desc'), price: "€60", totalPrice: t('pricing.pack3.total'), videoId: "xiHAHWMJId4", comingSoon: false },
+              { id: "pack4", icon: <Compass size={40} strokeWidth={1} />, title: t('pricing.pack4.title'), desc: t('pricing.pack4.longDesc'), duration: t('pricing.pack4.desc'), price: "€250", totalPrice: t('pricing.pack4.total'), videoId: "Ny7NzlX6L_4", comingSoon: false }
             ].map((feature, i) => (
               <motion.div 
                 key={i}
@@ -516,15 +517,17 @@ export default function Landing() {
               >
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
                 <div className="w-full h-[300px] md:h-[400px] rounded-2xl overflow-hidden relative">
-                  <video 
-                    className="w-full h-full object-cover pointer-events-none scale-105"
-                    autoPlay 
-                    muted 
-                    loop 
-                    playsInline
-                  >
-                    <source src={feature.video} type="video/webm" />
-                  </video>
+                  <iframe 
+                    width="100%" 
+                    height="100%" 
+                    src={`https://www.youtube.com/embed/${feature.videoId}?autoplay=1&mute=1&loop=1&playlist=${feature.videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1`} 
+                    title={feature.title}
+                    frameBorder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowFullScreen
+                    loading="lazy"
+                    className="w-full h-full object-cover pointer-events-none scale-150"
+                  ></iframe>
                   <div className="absolute inset-0 bg-navy/20 group-hover:bg-transparent transition-colors duration-700 pointer-events-none"></div>
                 </div>
                 <div className="flex flex-col md:flex-row gap-8 items-start md:items-center justify-between">
@@ -880,7 +883,8 @@ export default function Landing() {
             loop 
             playsInline
           >
-            <source src="/assets/hero.webm" type="video/webm" />
+            <source src="/assets/hero-video.webm" type="video/webm" />
+            <source src="/assets/hero-video.mp4" type="video/mp4" />
           </video>
         </div>
 
