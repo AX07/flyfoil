@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { 
   Users, Calendar, Clock, MapPin, 
   CheckCircle, XCircle, Shirt, Search,
-  Filter, ChevronDown, Activity, FileSignature, BookOpen, LogIn, LogOut, CalendarX, Edit2, Trash2, Plus
+  Filter, ChevronDown, Activity, FileSignature, BookOpen, LogIn, LogOut, CalendarX, Edit2, Trash2, Plus, Compass
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { collection, onSnapshot, query, orderBy, doc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
@@ -377,8 +377,8 @@ export default function Admin() {
     }
   });
 
-  const StatusBadge = ({ status, type }: { status: string | boolean, type: 'health' | 'waiver' | 'school' }) => {
-    const isComplete = status === 'fit' || status === 'signed' || status === true;
+  const StatusBadge = ({ status, type, experienceLabel }: { status: string | boolean | null, type: 'health' | 'waiver' | 'school' | 'experience', experienceLabel?: string | null }) => {
+    const isComplete = status === 'fit' || status === 'signed' || status === true || (type === 'experience' && status !== null && status !== undefined && status !== '');
     
     return (
       <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
@@ -391,6 +391,7 @@ export default function Admin() {
           {type === 'health' && (status === 'fit' ? 'Fit' : 'Pending')}
           {type === 'waiver' && (status === 'signed' ? 'Signed' : 'Pending')}
           {type === 'school' && (status === true ? 'Done' : 'Pending')}
+          {type === 'experience' && (isComplete ? experienceLabel : 'Pending')}
         </span>
       </div>
     );
@@ -672,6 +673,19 @@ export default function Admin() {
                         <div className="flex items-center justify-between gap-4">
                           <span className="text-xs text-silver flex items-center gap-1.5"><FileSignature size={12}/> Waiver</span>
                           <StatusBadge status={res.waiverStatus} type="waiver" />
+                        </div>
+                        <div className="flex items-center justify-between gap-4">
+                          <span className="text-xs text-silver flex items-center gap-1.5"><Compass size={12}/> Experience</span>
+                          <StatusBadge 
+                            status={res.riderExperience || null} 
+                            type="experience" 
+                            experienceLabel={
+                              res.riderExperience === 'never' ? 'Beginner' :
+                              res.riderExperience === 'surfed' ? 'Surfed' :
+                              res.riderExperience === 'foiled' ? 'Foiled' :
+                              res.riderExperience === 'efoiled' ? 'eFoiled' : 'Done'
+                            } 
+                          />
                         </div>
                         <div className="flex items-center justify-between gap-4">
                           <span className="text-xs text-silver flex items-center gap-1.5"><BookOpen size={12}/> School</span>

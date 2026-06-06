@@ -267,7 +267,7 @@ export default function Landing() {
       )}
 
       {/* Hero Section */}
-      <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[70svh] md:min-h-[100svh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <div className={`absolute inset-0 z-10 ${isDarkMode ? 'bg-black/40' : 'bg-black/60 sm:bg-black/40'}`}></div>
           <div className={`absolute inset-0 z-10 bg-gradient-to-b ${isDarkMode ? 'from-navy/60 via-navy/20' : 'from-navy/80 via-navy/40'} to-transparent`}></div>
@@ -283,7 +283,7 @@ export default function Landing() {
           </video>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 w-full pt-32 pb-20 md:pt-24 md:pb-24 flex flex-col items-center text-center justify-center">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 w-full pt-24 pb-12 md:pt-24 md:pb-24 flex flex-col items-center text-center justify-center">
           <motion.h1 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -306,7 +306,7 @@ export default function Landing() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6 }}
-            className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-10"
+            className="w-full max-w-6xl grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-8 md:mb-10"
             id="pricing"
           >
             {[
@@ -872,7 +872,7 @@ export default function Landing() {
       </section>
 
       {/* Booking Hub */}
-      <section id="booking" className="relative py-24 flex items-center justify-center overflow-hidden min-h-[100svh]">
+      <section id="booking" className="relative py-16 md:py-24 flex items-center justify-center overflow-hidden min-h-[70svh] md:min-h-[100svh]">
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-black/50 z-10"></div>
           <div className="absolute inset-0 bg-gradient-to-b from-navy via-navy/40 to-navy z-10"></div>
