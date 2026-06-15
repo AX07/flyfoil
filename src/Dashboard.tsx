@@ -4,7 +4,7 @@ import {
   Clock, Wind, Thermometer, MapPin, 
   Shirt, HeartPulse, FileSignature, 
   CheckCircle, Video, DownloadCloud, ChevronRight, Check,
-  Sun, Moon, Waves, X, Compass, Globe
+  Sun, Moon, Waves, X, Compass, Globe, Edit2, Save
 } from 'lucide-react';
 import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
@@ -104,6 +104,8 @@ export default function Dashboard() {
     equipment: false,
   });
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const [isEditingInfo, setIsEditingInfo] = useState(false);
+  const [editInfoForm, setEditInfoForm] = useState({ fullName: '', email: '', phone: '' });
 
   // Mock countdown effect
   useEffect(() => {
@@ -447,22 +449,77 @@ export default function Dashboard() {
         {/* 1.5 Booking Details */}
         {bookingData && (
           <section>
-            <h2 className="text-2xl font-display font-black mb-6 uppercase tracking-wider flex items-center gap-3">
-              <span className="w-8 h-px bg-electric"></span> {t('dashboard.bookingDetails')}
-            </h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-display font-black uppercase tracking-wider flex items-center gap-3">
+                <span className="w-8 h-px bg-electric"></span> {t('dashboard.bookingDetails')}
+              </h2>
+              <button 
+                onClick={async () => {
+                  if (isEditingInfo) {
+                    try {
+                      await updateDoc(doc(db, 'reservations', id!), {
+                        fullName: editInfoForm.fullName,
+                        email: editInfoForm.email,
+                        phone: editInfoForm.phone
+                      });
+                      setIsEditingInfo(false);
+                    } catch (error) {
+                      console.error("Error updating info:", error);
+                    }
+                  } else {
+                    setEditInfoForm({ 
+                      fullName: bookingData.fullName || '', 
+                      email: bookingData.email || '', 
+                      phone: bookingData.phone || '' 
+                    });
+                    setIsEditingInfo(true);
+                  }
+                }}
+                className="flex items-center gap-2 text-sm font-bold bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl transition-colors"
+              >
+                {isEditingInfo ? <><Save size={16} /> Save</> : <><Edit2 size={16} /> Edit Info</>}
+              </button>
+            </div>
             <div className="dashboard-card rounded-2xl p-6 md:p-8">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
                   <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">{t('dashboard.name')}</p>
-                  <p className="text-lg font-medium text-white">{bookingData.fullName || 'N/A'}</p>
+                  {isEditingInfo ? (
+                    <input 
+                      type="text" 
+                      value={editInfoForm.fullName} 
+                      onChange={(e) => setEditInfoForm({...editInfoForm, fullName: e.target.value})}
+                      className="bg-black/50 border border-white/20 rounded-lg px-3 py-1.5 text-white w-full focus:outline-none focus:border-electric"
+                    />
+                  ) : (
+                    <p className="text-lg font-medium text-white">{bookingData.fullName || 'N/A'}</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">{t('dashboard.email')}</p>
-                  <p className="text-lg font-medium text-white">{bookingData.email || 'N/A'}</p>
+                  {isEditingInfo ? (
+                    <input 
+                      type="email" 
+                      value={editInfoForm.email} 
+                      onChange={(e) => setEditInfoForm({...editInfoForm, email: e.target.value})}
+                      className="bg-black/50 border border-white/20 rounded-lg px-3 py-1.5 text-white w-full focus:outline-none focus:border-electric"
+                    />
+                  ) : (
+                    <p className="text-lg font-medium text-white">{bookingData.email || 'N/A'}</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">{t('dashboard.phone')}</p>
-                  <p className="text-lg font-medium text-white">{bookingData.phone || 'N/A'}</p>
+                  {isEditingInfo ? (
+                    <input 
+                      type="tel" 
+                      value={editInfoForm.phone} 
+                      onChange={(e) => setEditInfoForm({...editInfoForm, phone: e.target.value})}
+                      className="bg-black/50 border border-white/20 rounded-lg px-3 py-1.5 text-white w-full focus:outline-none focus:border-electric"
+                    />
+                  ) : (
+                    <p className="text-lg font-medium text-white">{bookingData.phone || 'N/A'}</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-sm text-silver/60 uppercase tracking-wider mb-1">{t('dashboard.dateTime')}</p>

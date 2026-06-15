@@ -440,7 +440,6 @@ export default function Admin() {
                   type="date" 
                   value={blockDate}
                   onChange={(e) => setBlockDate(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
                   className="bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-electric transition-colors appearance-none flex-1"
                   required
                 />
@@ -769,7 +768,6 @@ export default function Admin() {
                   type="date" 
                   value={editFormData.date}
                   onChange={(e) => setEditFormData({...editFormData, date: e.target.value})}
-                  min={new Date().toISOString().split('T')[0]}
                   className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-electric"
                   required
                 />
@@ -877,7 +875,6 @@ export default function Admin() {
                     type="date" 
                     value={addFormData.date}
                     onChange={(e) => setAddFormData({...addFormData, date: e.target.value})}
-                    min={new Date().toISOString().split('T')[0]}
                     className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-electric"
                     required
                   />
