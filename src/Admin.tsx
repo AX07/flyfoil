@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { 
   Users, Calendar, Clock, MapPin, 
   CheckCircle, XCircle, Shirt, Search,
-  Filter, ChevronDown, Activity, FileSignature, BookOpen, LogIn, LogOut, CalendarX, Edit2, Trash2, Plus, Compass
+  Filter, ChevronDown, Activity, FileSignature, BookOpen, LogIn, LogOut, CalendarX, Edit2, Trash2, Plus, Compass, CreditCard
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { collection, onSnapshot, query, orderBy, doc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
@@ -377,7 +377,7 @@ export default function Admin() {
     }
   });
 
-  const StatusBadge = ({ status, type, experienceLabel }: { status: string | boolean | null, type: 'health' | 'waiver' | 'school' | 'experience', experienceLabel?: string | null }) => {
+  const StatusBadge = ({ status, type, experienceLabel }: { status: string | boolean | null, type: 'health' | 'waiver' | 'school' | 'experience' | 'deposit', experienceLabel?: string | null }) => {
     const isComplete = status === 'fit' || status === 'signed' || status === true || (type === 'experience' && status !== null && status !== undefined && status !== '');
     
     return (
@@ -392,6 +392,7 @@ export default function Admin() {
           {type === 'waiver' && (status === 'signed' ? 'Signed' : 'Pending')}
           {type === 'school' && (status === true ? 'Done' : 'Pending')}
           {type === 'experience' && (isComplete ? experienceLabel : 'Pending')}
+          {type === 'deposit' && (status === true ? 'Paid' : 'Pending')}
         </span>
       </div>
     );
@@ -689,6 +690,23 @@ export default function Admin() {
                         <div className="flex items-center justify-between gap-4">
                           <span className="text-xs text-silver flex items-center gap-1.5"><BookOpen size={12}/> School</span>
                           <StatusBadge status={res.flightSchool} type="school" />
+                        </div>
+                        <div className="flex items-center justify-between gap-4 pt-2 mt-1 border-t border-white/5">
+                          <span className="text-xs text-silver flex items-center gap-1.5"><CreditCard size={12}/> Deposit</span>
+                          <button 
+                            onClick={async () => {
+                              try {
+                                await updateDoc(doc(db, 'reservations', res.id), {
+                                  depositPaid: !res.depositPaid
+                                });
+                              } catch (e) {
+                                console.error('Error toggling deposit:', e);
+                              }
+                            }}
+                            className="hover:scale-105 transition-transform"
+                          >
+                            <StatusBadge status={res.depositPaid || false} type="deposit" />
+                          </button>
                         </div>
                       </div>
                     </td>

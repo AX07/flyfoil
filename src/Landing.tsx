@@ -64,11 +64,14 @@ export default function Landing() {
   const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
   const [availableSlots, setAvailableSlots] = useState({ morning: true, evening: true });
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [selectedSessionTime, setSelectedSessionTime] = useState('');
   const [showWaiverPopup, setShowWaiverPopup] = useState(false);
+  const [showPrivacyPopup, setShowPrivacyPopup] = useState(false);
+  const [showTermsPopup, setShowTermsPopup] = useState(false);
 
   useEffect(() => {
     if (!selectedDate) {
@@ -271,12 +274,41 @@ export default function Landing() {
         <div className="absolute inset-0 z-0">
           <div className={`absolute inset-0 z-10 ${isDarkMode ? 'bg-black/40' : 'bg-black/60 sm:bg-black/40'}`}></div>
           <div className={`absolute inset-0 z-10 bg-gradient-to-b ${isDarkMode ? 'from-navy/60 via-navy/20' : 'from-navy/80 via-navy/40'} to-transparent`}></div>
+          
+          <AnimatePresence>
+            {!isVideoLoaded && (
+              <motion.div 
+                initial={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1 }}
+                className="absolute inset-0 z-0 flex items-center justify-center"
+              >
+                <div className="absolute inset-0 bg-navy pointer-events-none z-0">
+                  <div className={`absolute inset-0 ${isDarkMode ? 'bg-black/80' : 'bg-black/20'} z-10`}></div>
+                  <div className={`absolute inset-0 bg-gradient-to-b from-navy ${isDarkMode ? 'via-navy/60' : 'via-navy/10'} to-navy z-10`}></div>
+                  <img 
+                    src="/assets/pool-water-bg.png" 
+                    alt="Pool water background"
+                    className="w-full h-full object-cover blur-sm"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+                <img 
+                  src={isDarkMode ? "/assets/logo-light.png" : "/assets/logo-dark.png"} 
+                  alt="Loading FlyFoil Formosa" 
+                  className="w-48 md:w-64 h-auto relative z-10 opacity-50 animate-pulse"
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <video 
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover transition-opacity duration-1000 ${isVideoLoaded ? 'opacity-100' : 'opacity-0'}`}
             autoPlay 
             muted 
             loop 
             playsInline
+            onLoadedData={() => setIsVideoLoaded(true)}
           >
             <source src="/assets/hero-video.webm" type="video/webm" />
             <source src="/assets/hero-video.mp4" type="video/mp4" />
@@ -690,6 +722,14 @@ export default function Landing() {
             <span className="text-white font-bold tracking-widest uppercase text-sm">{t('social.follow')}</span>
             <a href="https://www.instagram.com/flyfoilformosa/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-electric hover:text-navy hover:border-electric transition-all">
               <Instagram size={20} />
+            </a>
+            <a href="https://www.youtube.com/@FlyFoilFormosa" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-electric hover:text-navy hover:border-electric transition-all">
+              <Youtube size={20} />
+            </a>
+            <a href="https://www.tiktok.com/@flyfoilformosa.com?_r=1&_t=ZG-98FFXwpJXZB" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-electric hover:text-navy hover:border-electric transition-all" title="Follow us on TikTok">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+              </svg>
             </a>
             <a href="https://g.page/r/CXoNgFSNAwbVEBM/review" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-electric hover:text-navy hover:border-electric transition-all" title="Review us on Google">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -1198,6 +1238,14 @@ export default function Landing() {
                 <a href="https://www.instagram.com/flyfoilformosa/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-navy-light flex items-center justify-center hover:bg-electric hover:text-navy cursor-pointer transition-colors border border-white/10">
                   <Instagram size={20} />
                 </a>
+                <a href="https://www.youtube.com/@FlyFoilFormosa" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-navy-light flex items-center justify-center hover:bg-electric hover:text-navy cursor-pointer transition-colors border border-white/10">
+                  <Youtube size={20} />
+                </a>
+                <a href="https://www.tiktok.com/@flyfoilformosa.com?_r=1&_t=ZG-98FFXwpJXZB" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-navy-light flex items-center justify-center hover:bg-electric hover:text-navy cursor-pointer transition-colors border border-white/10" title="Follow us on TikTok">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+                  </svg>
+                </a>
                 <a href="https://g.page/r/CXoNgFSNAwbVEBM/review" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-navy-light flex items-center justify-center hover:bg-electric hover:text-navy cursor-pointer transition-colors border border-white/10" title="Review us on Google">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/>
@@ -1243,8 +1291,8 @@ export default function Landing() {
               </div>
             </div>
             <div className="flex gap-6">
-              <a href="#" className="hover:text-white transition-colors">{t('footer.privacy')}</a>
-              <a href="#" className="hover:text-white transition-colors">{t('footer.terms')}</a>
+              <button onClick={(e) => { e.preventDefault(); setShowPrivacyPopup(true); }} className="hover:text-white transition-colors cursor-pointer">{t('footer.privacy')}</button>
+              <button onClick={(e) => { e.preventDefault(); setShowTermsPopup(true); }} className="hover:text-white transition-colors cursor-pointer">{t('footer.terms')}</button>
             </div>
           </div>
         </div>
@@ -1312,6 +1360,70 @@ export default function Landing() {
               <div className="flex justify-end">
                 <button 
                   onClick={() => setShowWaiverPopup(false)}
+                  className="px-8 py-3 bg-electric text-navy font-bold rounded-xl text-sm hover:bg-electric/90 transition-colors"
+                >
+                  {t('waiver.close')}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {showPrivacyPopup && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-navy border border-white/10 rounded-2xl p-6 max-w-lg w-full relative shadow-2xl"
+            >
+              <button onClick={() => setShowPrivacyPopup(false)} className="absolute top-4 right-4 text-silver hover:text-white">
+                <X size={20} />
+              </button>
+              <h3 className="text-2xl font-display font-black mb-4 flex items-center gap-2 uppercase">
+                {t('footer.privacy')}
+              </h3>
+              <div className="dashboard-card rounded-xl p-4 h-64 overflow-y-auto text-silver/80 text-sm mb-6 space-y-4">
+                <p className="font-bold text-white">Privacy Policy Information</p>
+                <p>We respect your privacy and are committed to protecting it through our compliance with this policy.</p>
+                <p>This policy describes the types of information we may collect from you or that you may provide when you visit our website, and our practices for collecting, using, maintaining, protecting, and disclosing that information.</p>
+                <p>Please refer to our complete, printed version upon arrival at the headquarters for any legal procedures.</p>
+              </div>
+              <div className="flex justify-end">
+                <button 
+                  onClick={() => setShowPrivacyPopup(false)}
+                  className="px-8 py-3 bg-electric text-navy font-bold rounded-xl text-sm hover:bg-electric/90 transition-colors"
+                >
+                  {t('waiver.close')}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {showTermsPopup && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-navy border border-white/10 rounded-2xl p-6 max-w-lg w-full relative shadow-2xl"
+            >
+              <button onClick={() => setShowTermsPopup(false)} className="absolute top-4 right-4 text-silver hover:text-white">
+                <X size={20} />
+              </button>
+              <h3 className="text-2xl font-display font-black mb-4 flex items-center gap-2 uppercase">
+                {t('footer.terms')}
+              </h3>
+              <div className="dashboard-card rounded-xl p-4 h-64 overflow-y-auto text-silver/80 text-sm mb-6 space-y-4">
+                <p className="font-bold text-white">Terms of Service Information</p>
+                <p>These terms of service govern your use of our website and your booking of our services.</p>
+                <p>By accessing our website and making a booking, you agree to be bound by these terms. If you disagree with any part of the terms, you may not access our services.</p>
+                <p>Please refer to our complete, printed version upon arrival at the headquarters for any legal procedures.</p>
+              </div>
+              <div className="flex justify-end">
+                <button 
+                  onClick={() => setShowTermsPopup(false)}
                   className="px-8 py-3 bg-electric text-navy font-bold rounded-xl text-sm hover:bg-electric/90 transition-colors"
                 >
                   {t('waiver.close')}

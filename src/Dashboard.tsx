@@ -251,8 +251,29 @@ export default function Dashboard() {
             <h1 className="text-3xl md:text-5xl font-display font-black mb-4 tracking-tighter uppercase leading-none">
               {t('dashboard.thanks')}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-electric to-blue-400">{bookingData?.fullName?.split(' ')[0] || 'Alex'}</span>
             </h1>
+
+            {/* Booking Confirmation Status */}
+            <div className="max-w-md mx-auto mb-4">
+              <div className={`rounded-xl p-4 border flex items-center justify-center gap-3 ${
+                bookingData?.depositPaid 
+                  ? 'bg-green-500/10 border-green-500/30 text-green-400' 
+                  : 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400'
+              }`}>
+                {bookingData?.depositPaid ? (
+                  <>
+                    <CheckCircle size={20} />
+                    <span className="font-bold uppercase tracking-wider text-sm">Booking Confirmed</span>
+                  </>
+                ) : (
+                  <>
+                    <Clock size={20} />
+                    <span className="font-bold uppercase tracking-wider text-sm">Pending 50% Deposit</span>
+                  </>
+                )}
+              </div>
+            </div>
             
-            <div className="mt-8 dashboard-card rounded-2xl p-8 max-w-md mx-auto backdrop-blur-md">
+            <div className="mt-4 dashboard-card rounded-2xl p-8 max-w-md mx-auto backdrop-blur-md">
               <p className="text-silver/90 text-lg font-light uppercase tracking-widest mb-2">{t('dashboard.statusLine')}</p>
               <div className="text-5xl md:text-7xl font-mono font-bold text-white tracking-tight mb-2">
                 {timeLeft}
@@ -538,32 +559,26 @@ export default function Dashboard() {
           </section>
         )}
 
-        {/* 4. The "After-Flight" Gallery */}
+        {/* 4. Review Section */}
         <section className="pb-12">
           <h2 className="text-2xl font-display font-black mb-6 uppercase tracking-wider flex items-center gap-3">
-            <span className="w-8 h-px bg-electric"></span> {t('dashboard.gallery')}
+            <span className="w-8 h-px bg-electric"></span> {t('dashboard.reviewTitle')}
           </h2>
-          <div className="relative rounded-2xl overflow-hidden">
-            <div className="dashboard-card p-8 flex flex-col md:flex-row items-center justify-between gap-6 blur-sm opacity-50 pointer-events-none">
-              <div className="flex items-center gap-6">
-                <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                  <DownloadCloud className="text-white" size={32} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-display font-bold text-white mb-1 uppercase tracking-wider">{t('dashboard.mediaTitle')}</h3>
-                  <p className="text-silver/80 text-sm">{t('dashboard.mediaDesc')}</p>
-                </div>
+          <div className="dashboard-card rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-6">
+              <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor" className="text-white">
+                  <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/>
+                </svg>
               </div>
-              <button className="w-full md:w-auto px-8 py-3 bg-white/10 text-white/50 border border-white/20 font-bold rounded-xl text-sm cursor-not-allowed flex items-center justify-center gap-2 shrink-0">
-                {t('dashboard.availPost')}
-              </button>
-            </div>
-            
-            <div className="absolute inset-0 flex items-center justify-center z-10">
-              <div className="bg-navy/80 backdrop-blur-md border border-white/20 px-8 py-4 rounded-full shadow-2xl">
-                <span className="text-white font-display font-bold uppercase tracking-widest text-lg">{t('common.comingSoon')}</span>
+              <div>
+                <h3 className="text-xl font-display font-bold text-white mb-1 uppercase tracking-wider">{t('dashboard.reviewTitle')}</h3>
+                <p className="text-silver/80 text-sm">{t('dashboard.reviewDesc')}</p>
               </div>
             </div>
+            <a href="https://g.page/r/CXoNgFSNAwbVEBM/review" target="_blank" rel="noopener noreferrer" className="w-full md:w-auto px-8 py-3 bg-electric text-navy font-bold rounded-xl text-sm hover:bg-electric/90 transition-colors flex items-center justify-center gap-2 shrink-0">
+              {t('dashboard.reviewBtn')}
+            </a>
           </div>
         </section>
 
