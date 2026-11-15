@@ -92,7 +92,8 @@ const translations: Record<Language, Record<string, string>> = {
     
     // Login
     'login.title': 'Access Flight Deck',
-    'login.subtitle': 'Enter your booking email or phone number to access your Flight Deck.',
+    'login.subtitle': 'Your Flight Deck opens from the personal link we sent you on WhatsApp. Lost it? Message us and we will send it again.',
+    'login.askLink': 'ASK FOR MY LINK',
     'login.email': 'Email',
     'login.phone': 'Phone Number',
     'login.emailLabel': 'Email Address',
@@ -322,7 +323,8 @@ const translations: Record<Language, Record<string, string>> = {
     
     // Login
     'login.title': 'Acesso à Área de Cliente',
-    'login.subtitle': 'Insira o seu email de reserva ou telemóvel para aceder.',
+    'login.subtitle': 'A sua Área de Cliente abre a partir do link pessoal que lhe enviámos por WhatsApp. Perdeu-o? Envie-nos uma mensagem e reenviamos.',
+    'login.askLink': 'PEDIR O MEU LINK',
     'login.email': 'Email',
     'login.phone': 'Telemóvel',
     'login.emailLabel': 'Endereço de Email',

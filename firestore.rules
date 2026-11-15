@@ -26,7 +26,6 @@ service cloud.firestore {
     //   - status: string (required, 'booked' or 'blocked')
     //   - date: string (required)
     //   - sessionTime: string (required)
-    //   - reservationId: string (optional)
     //   - createdAt: string (required)
     // ===============================================================
 
@@ -59,43 +58,63 @@ service cloud.firestore {
     }
 
     match /schedule/{slotId} {
-      // Anyone can read availability
+      // Anyone can read availability. Slots therefore must never hold anything
+      // about the customer, and in particular not the reservation id.
       allow read: if true;
-      
-      // Admins can do anything
-      // Users can create a slot ONLY IF they are also creating a reservation in the same batch
+
+      // The public booking form may claim a free slot, nothing more.
       allow create: if isAdmin() || (
-        !exists(/databases/$(database)/documents/schedule/$(slotId)) &&
+        request.resource.data.keys().hasOnly(['status', 'date', 'sessionTime', 'createdAt']) &&
+        hasRequiredFields(['status', 'date', 'sessionTime', 'createdAt']) &&
         request.resource.data.status == 'booked' &&
-        hasRequiredFields(['status', 'date', 'sessionTime', 'reservationId', 'createdAt']) &&
-        existsAfter(/databases/$(database)/documents/reservations/$(request.resource.data.reservationId))
+        request.resource.data.date is string && request.resource.data.date.size() < 20 &&
+        request.resource.data.sessionTime is string && request.resource.data.sessionTime.size() < 50 &&
+        slotId == request.resource.data.date + '_' + request.resource.data.sessionTime
       );
-      
+
       allow update, delete: if isAdmin();
     }
 
     match /reservations/{reservationId} {
-      allow create: if hasRequiredFields(['fullName', 'email', 'phone', 'date', 'sessionTime', 'location', 'experience', 'wetsuitSize', 'healthStatus', 'waiverStatus', 'flightSchool', 'createdAt']) &&
-                       isValidReservation(request.resource.data);
-      
+      // The reservation id is the customer's access key: it is long and random,
+      // and it is only ever sent to that customer (their dashboard link).
+      // Reading one reservation needs its id; nobody but an admin can list or
+      // search them, so ids, names, emails and phones cannot be harvested.
       allow get: if true;
-      allow list: if true; // Prototype only: allows querying by email/phone
+      allow list: if isAdmin();
 
-      allow update: if isAdmin() || (isValidReservation(request.resource.data) &&
-                       request.resource.data.createdAt == resource.data.createdAt &&
-                       request.resource.data.fullName == resource.data.fullName &&
-                       request.resource.data.email == resource.data.email &&
-                       request.resource.data.phone == resource.data.phone &&
-                       request.resource.data.date == resource.data.date &&
-                       request.resource.data.sessionTime == resource.data.sessionTime &&
-                       request.resource.data.location == resource.data.location);
-                       
+      // Public booking form: exactly the booking fields, nothing extra
+      // (so a visitor cannot mark their own deposit as paid).
+      allow create: if isAdmin() || (
+        request.resource.data.keys().hasOnly(['fullName', 'email', 'phone', 'date', 'sessionTime', 'location', 'experience', 'wetsuitSize', 'healthStatus', 'waiverStatus', 'flightSchool', 'createdAt']) &&
+        hasRequiredFields(['fullName', 'email', 'phone', 'date', 'sessionTime', 'location', 'experience', 'wetsuitSize', 'healthStatus', 'waiverStatus', 'flightSchool', 'createdAt']) &&
+        isValidReservation(request.resource.data)
+      );
+
+      // A customer holding the link may only complete their own checklist.
+      // Identity, date, time, location and payment status are admin-only.
+      allow update: if isAdmin() || (
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['wetsuitSize', 'healthStatus', 'waiverStatus', 'flightSchool', 'riderExperience']) &&
+        isValidReservation(request.resource.data) &&
+        (!('riderExperience' in request.resource.data) ||
+          (request.resource.data.riderExperience is string && request.resource.data.riderExperience.size() < 30))
+      );
+
       allow delete: if isAdmin();
     }
+
+    // Admin-only notes for the CMS message assistant (pasted conversation,
+    // payment link, last draft). Kept out of /reservations because a
+    // reservation is readable by the customer who holds its link.
+    match /assistantThreads/{reservationId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Outgoing email queue. Nothing in the site writes here, and an open
+    // "create" would let anyone send email from this project.
     match /mail/{mailId} {
-      // Anyone can create an email Trigger
-      allow create: if true;
-      allow read, update, delete: if isAdmin();
+      allow read, write: if isAdmin();
     }
   }
 }

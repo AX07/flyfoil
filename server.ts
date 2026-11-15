@@ -5,6 +5,7 @@ import path from "path";
 import fs from "fs/promises";
 import { Resend } from 'resend';
 import { GoogleGenAI, Type } from '@google/genai';
+import { handleDraftRequest } from './api/_lib/assistant.js';
 
 async function startServer() {
   const app = express();
@@ -55,6 +56,12 @@ async function startServer() {
     }
   });
 
+  // CMS message assistant (same handler as the Vercel function in api/draft-reply.ts)
+  app.post("/api/draft-reply", async (req, res) => {
+    const { status, json } = await handleDraftRequest(req.headers.authorization, req.body);
+    res.status(status).json(json);
+  });
+
   app.post("/api/send-booking-confirmation", async (req, res) => {
     const { email, phone, reservationId, fullName, date, sessionTime, experience, location } = req.body;
 
@@ -62,7 +69,7 @@ async function startServer() {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const profileLink = `${req.protocol}://${req.get('host')}/dashboard/${reservationId}?token=magic_${reservationId}`;
+    const profileLink = `${req.protocol}://${req.get('host')}/dashboard/${reservationId}`;
     let emailSent = false;
     let adminEmailSent = false;
     let errors: string[] = [];

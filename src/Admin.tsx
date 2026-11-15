@@ -3,15 +3,23 @@ import { motion } from 'motion/react';
 import { 
   Users, Calendar, Clock, MapPin, 
   CheckCircle, XCircle, Shirt, Search,
-  Filter, ChevronDown, Activity, FileSignature, BookOpen, LogIn, LogOut, CalendarX, Edit2, Trash2, Plus, Compass, CreditCard
+  Filter, ChevronDown, Activity, FileSignature, BookOpen, LogIn, LogOut, CalendarX, Edit2, Trash2, Plus, Compass, CreditCard, Sparkles
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { collection, onSnapshot, query, orderBy, doc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, doc, setDoc, deleteDoc, updateDoc, deleteField } from 'firebase/firestore';
 import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, signInWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from './firebase';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { format, parseISO, isSameDay } from 'date-fns';
+import MessageAssistant from './MessageAssistant';
+
+/** 20 random characters (~100 bits) from the browser's crypto source. */
+function newReservationId() {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = crypto.getRandomValues(new Uint8Array(20));
+  return 'RES-' + Array.from(bytes, (b) => alphabet[b % alphabet.length]).join('');
+}
 
 export default function Admin() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,6 +39,8 @@ export default function Admin() {
   
   const [editingUser, setEditingUser] = useState<any>(null);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
+  // undefined = closed, null = new lead (no reservation), string = reservation id
+  const [assistantFor, setAssistantFor] = useState<string | null | undefined>(undefined);
   const [editFormData, setEditFormData] = useState({
     date: '',
     sessionTime: '',
@@ -78,6 +88,19 @@ export default function Admin() {
       unsubscribeSchedule();
     };
   }, [isAuthReady, user]);
+
+  // One-off cleanup: older schedule slots stored the reservation id, and the
+  // schedule is publicly readable (the booking form needs availability).
+  // Strip it so a slot never reveals a customer's dashboard link.
+  useEffect(() => {
+    schedule
+      .filter((s) => s.reservationId)
+      .forEach((s) => {
+        updateDoc(doc(db, 'schedule', s.id), { reservationId: deleteField() }).catch((e) =>
+          console.warn('Could not clean schedule slot', s.id, e),
+        );
+      });
+  }, [schedule]);
 
   const handleLogin = async () => {
     const provider = new GoogleAuthProvider();
@@ -191,8 +214,9 @@ export default function Admin() {
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Create a unique ID for the reservation
-      const reservationId = `RES-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+      // The id doubles as the customer's access key (their dashboard link),
+      // so it has to be long and cryptographically random.
+      const reservationId = newReservationId();
       
       // Check if slot is available
       const slotId = `${addFormData.date}_${addFormData.sessionTime}`;
@@ -208,7 +232,6 @@ export default function Admin() {
         status: 'booked',
         date: addFormData.date,
         sessionTime: addFormData.sessionTime,
-        reservationId: reservationId,
         createdAt: new Date()
       });
 
@@ -255,7 +278,6 @@ export default function Admin() {
           status: 'booked',
           date: editFormData.date,
           sessionTime: editFormData.sessionTime,
-          reservationId: editingUser.id,
           createdAt: new Date()
         });
       }
@@ -600,6 +622,12 @@ export default function Admin() {
               </div>
               <div className="flex gap-4 w-full md:w-auto">
                 <button
+                  onClick={() => setAssistantFor(null)}
+                  className="px-6 py-3 bg-white/5 border border-white/10 text-white font-bold rounded-xl text-sm hover:bg-white/10 transition-colors flex items-center gap-2 whitespace-nowrap"
+                >
+                  <Sparkles size={18} className="text-electric" /> New Lead Reply
+                </button>
+                <button
                   onClick={() => setShowAddUserModal(true)}
                   className="px-6 py-3 bg-electric text-navy font-bold rounded-xl text-sm hover:bg-electric/90 transition-colors flex items-center gap-2 whitespace-nowrap"
                 >
@@ -712,9 +740,16 @@ export default function Admin() {
                     </td>
                     <td className="p-4 align-top text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button 
+                        <button
+                          onClick={() => setAssistantFor(res.id)}
+                          className="p-2 text-electric hover:text-navy bg-electric/10 hover:bg-electric rounded-lg transition-colors"
+                          title="Write a message to this customer"
+                        >
+                          <Sparkles size={16} />
+                        </button>
+                        <button
                           onClick={() => {
-                            const link = `${window.location.origin}/dashboard/${res.id}?token=magic_${res.id}`;
+                            const link = `${window.location.origin}/dashboard/${res.id}`;
                             navigator.clipboard.writeText(link);
                             setAlertMessage('Magic link copied to clipboard!');
                             setTimeout(() => setAlertMessage(null), 3000);
@@ -974,6 +1009,14 @@ export default function Admin() {
             </form>
           </motion.div>
         </div>
+      )}
+
+      {/* Message Assistant */}
+      {assistantFor !== undefined && (
+        <MessageAssistant
+          reservation={assistantFor ? reservations.find(r => r.id === assistantFor) ?? null : null}
+          onClose={() => setAssistantFor(undefined)}
+        />
       )}
 
       {/* Alert Modal */}

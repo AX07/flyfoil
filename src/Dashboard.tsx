@@ -28,23 +28,11 @@ export default function Dashboard() {
   useEffect(() => {
     if (!id) return;
     
-    // Check for magic link token in URL
-    const searchParams = new URLSearchParams(location.search);
-    const token = searchParams.get('token');
-    
-    if (token === `magic_${id}`) {
-      // Valid magic link, save to local storage
-      localStorage.setItem('auth_reservation', id);
-      // Clean up URL
-      navigate(`/dashboard/${id}`, { replace: true });
-      return;
-    }
-    
-    // Check local storage auth
-    const authId = localStorage.getItem('auth_reservation');
-    if (authId !== id) {
-      // Not authenticated for this dashboard
-      navigate('/login');
+    // The reservation id in the link is the access key: it is long and random,
+    // and Firestore only returns a reservation to someone who already knows its id.
+    // Older links carried a ?token= parameter; drop it from the address bar.
+    if (new URLSearchParams(location.search).has('token')) {
+      navigate(location.pathname, { replace: true });
       return;
     }
 
@@ -200,8 +188,7 @@ export default function Dashboard() {
             <div className="text-sm font-medium text-silver/80 hidden sm:block">{t('dashboard.title')}</div>
             <button 
               onClick={() => {
-                localStorage.removeItem('auth_reservation');
-                navigate('/login');
+                navigate('/');
               }}
               className="text-sm font-medium text-silver hover:text-white transition-colors border border-white/10 rounded-lg px-3 py-1.5 hover:bg-white/5"
             >

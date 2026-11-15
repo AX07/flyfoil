@@ -1020,7 +1020,6 @@ export default function Landing() {
                 batch.set(reservationRef, bookingData);
                 batch.set(scheduleRef, {
                   status: 'booked',
-                  reservationId: reservationRef.id,
                   date: date,
                   sessionTime: sessionTime,
                   createdAt: new Date()
@@ -1085,7 +1084,6 @@ export default function Landing() {
                   // We don't block the user if messages fail, they still booked successfully
                 }
                 
-                localStorage.setItem('auth_reservation', reservationRef.id);
                 window.scrollTo(0, 0);
                 navigate(language === 'pt' ? `/pt/dashboard/${reservationRef.id}` : `/dashboard/${reservationRef.id}`);
               } catch (error) {
