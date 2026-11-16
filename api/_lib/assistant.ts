@@ -153,14 +153,26 @@ export async function draftReply(req: DraftRequest): Promise<string> {
   if (!process.env.GEMINI_API_KEY) throw new AssistantError(500, 'GEMINI_API_KEY is not configured on the server');
 
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const response = await ai.models.generateContent({
-    model: process.env.GEMINI_MODEL || 'gemini-3-flash-preview',
-    contents: buildUserPrompt(req, BUSINESS),
-    config: {
-      systemInstruction: buildSystemPrompt(BUSINESS),
-      temperature: 0.6,
-    },
-  });
+  const response = await ai.models
+    .generateContent({
+      model: process.env.GEMINI_MODEL || 'gemini-3-flash-preview',
+      contents: buildUserPrompt(req, BUSINESS),
+      config: {
+        systemInstruction: buildSystemPrompt(BUSINESS),
+        temperature: 0.6,
+      },
+    })
+    .catch((error: any) => {
+      console.error('Gemini request failed:', error);
+      // Tell the owner when it is their Google account, not the site, that needs attention.
+      if (error?.status === 402 || error?.status === 429) {
+        throw new AssistantError(502, 'Google refused the request: the Gemini account is out of credits or over its quota. Check billing at ai.studio/projects.');
+      }
+      if (error?.status === 400 || error?.status === 401 || error?.status === 403) {
+        throw new AssistantError(502, 'Google rejected the Gemini API key. Check GEMINI_API_KEY.');
+      }
+      throw error;
+    });
 
   const text = response.text?.trim();
   if (!text) throw new AssistantError(502, 'The model returned an empty reply, try again');
